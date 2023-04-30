@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schediazo"
+version = "0.1.0"
+description = "Vector drawing package in Python"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{name = "Chris Arridge", email = "chris@chrisarridge.co.uk"}]
+keywords = ["vector", "svg", "drawing"]
+classifiers = ["Development Status :: 2 - Pre-Alpha",
+                "Environment :: Console",
+                "Intended Audience :: Developers",
+                "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+                "Programming Language :: Python :: 3.8",
+                "Programming Language :: Python :: 3.9",
+                "Programming Language :: Python :: 3.10",
+                "Programming Language :: Python :: 3.11",
+                "Natural Language :: English",
+                "Topic :: Artistic Software",
+                "Topic :: Multimedia :: Graphics",
+                "Topic :: Multimedia :: Graphics :: Editors :: Vector-Based",
+                "Topic :: Scientific/Engineering :: Visualization",
+                "Topic :: Software Development :: Libraries :: Python Modules"]
+dependencies = [
+        'numpy',
+        'pillow']
+
+[project.urls]
+"Homepage" = "https://github.com/chrisarridge/schediazo"
+"Repository" = "https://github.com/chrisarridge/schediazo"
+"Bug Tracker" = "https://github.com/chrisarridge/schediazo/issues"
+
+[tool.setuptools.packages.find]
+where = ["source"]
+include = ["schediazo"]
+exclude = []
