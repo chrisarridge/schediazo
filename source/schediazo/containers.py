@@ -1,56 +1,52 @@
 import xml.etree.ElementTree as ET
 from typing import List, Union
 
-from .elements import Element, Core, Clip
+from .attributes import Clip
+from .part import PartDict
 
-class Group(Clip,Core,Element):
-    """Grouped set of drawing elements"""
+class Group(Clip,PartDict):
+    """Grouped set of drawing elements
+    """
     def __init__(self, **kwargs):
-        super(Group,self).__init__(**kwargs)
-        
-    def create_element(self, root: ET.SubElement):
-        """Create the element and set the attributes
-        
-        Args:
-            :param xml.etree.ElementTree.SubElement root: Element to create this group within.
+        """Initialise
         """
-        element = ET.SubElement(root, 'g')
-        self.set_element_attributes(element)
-        self.create_child_elements(element)
-        return element
+        super(Group,self).__init__(**kwargs)
+        self._tag = 'g'
 
     def set_element_attributes(self, element: Union[ET.SubElement,ET.Element]):
-        """Create the element and set the attributes
-        
-        Args:
-            :param SubElement | Element element: Element to set the attributes in.
+        """Set the SVG element attributes.
+
+        Parameters
+        ----------
+        element : Union[ET.SubElement,ET.Element]
+            Element to create the group under.
         """
         super(Group, self).set_element_attributes(element)
 
 
 
-class ClipPath(Core,Element):
-    """Grouped set of drawing elements that are a path we can clip to"""
+class ClipPath(PartDict):
+    """Grouped set of drawing elements that are a path we can clip to
+    """
     def __init__(self, clip_path_units: str=None, **kwargs):
+        """Initialise
+
+        Parameters
+        ----------
+        clip_path_units : str, optional
+            Units for the clip path.
+        """
         self._clip_path_units = clip_path_units
         super(ClipPath,self).__init__(**kwargs)
-
-    def create_element(self, root):
-        """Create the element and set the attributes
-        
-        Args:
-            :param xml.etree.ElementTree.SubElement root: Element to create this group within.
-        """
-        element = ET.SubElement(root, 'clipPath')
-        self.set_element_attributes(element)
-        self.create_child_elements(element)
-        return element
+        self._tag = 'clipPath'
 
     def set_element_attributes(self, element: Union[ET.SubElement,ET.Element]):
-        """Create the element and set the attributes
-        
-        Args:
-            :param SubElement | Element element: Element to set the attributes in.
+        """Set the SVG element attributes.
+
+        Parameters
+        ----------
+        element : Union[ET.SubElement,ET.Element]
+            Element to create the clip path under.
         """
         if self._clip_path_units is not None:
             element.set('clipPathUnits', self._clip_path_units)
