@@ -11,15 +11,24 @@ def two_point_align(xa: Union[List[float],Tuple,np.ndarray], ya: Union[List[floa
 
     Points [a] are rotated and translated so that they align with points [b].
 
-    Args:
-        :param array xa: X coordinates for point set a.
-        :param array ya: Y coordinates for point set a.
-        :param array xb: X coordinates for point set b.
-        :param array yb: Y coordinates for point set b.
-        :param int max_iter: maximum number of iterations.
-        :param int num_points: number of points used to find a solution.
-        :param bool plot_end: plot the points for the terminal solution
-        :return tuple angle, translate_x, translate_y: rotation angle and translation vector
+    Parameters
+    ----------
+    xa : Union[List[float],Tuple,np.ndarray]
+        X coordinates for the point set A that will end up being rotated and translated to match set B.
+    ya : Union[List[float],Tuple,np.ndarray]
+        Y coordinates for the point set A that will end up being rotated and translated to match set B.
+    xb : Union[List[float],Tuple,np.ndarray]
+        X coordinates for the point set B.
+    yb : Union[List[float],Tuple,np.ndarray]
+        Y coordinates for the point set B.
+    max_iter : int, optional
+        Maximum number of iterations., by default 50
+    rate_drop : float, optional
+        How quickly that step is reduced as the algorithm moves towards a minimum via gradient descent, by default 0.95
+    tolerance : float, optional
+        Tolerance for the solution minimum, by default 1e-6
+    verbose : bool, optional
+        Provide debugging information, by default False
     """
     def cost(xa,ya,xb,yb,th):
         tmp_x = (xa[0]-xa[1])*np.cos(th) - (ya[0]-ya[1])*np.sin(th) - xb[0] + xb[1]
