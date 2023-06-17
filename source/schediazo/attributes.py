@@ -274,3 +274,197 @@ class Clip(AttributeBase):
         if self._clip_path is not None:
             element.set('clip-path', 'url(#'+self._clip_path+')')
         super(Clip, self).set_element_attributes(element)
+
+
+
+class FontStyle(enum.Enum):
+    """Font styles
+
+    Attributes
+    ----------
+    Normal
+    Italic
+    Oblique
+    """
+    Normal = "normal"
+    Italic = "italic"
+    Oblique = "oblique"
+
+
+
+class FontVariant(enum.Enum):
+    """Font variants
+
+    Attributes
+    ----------
+    Normal
+        Normal glyphs
+    SmallCaps
+        All glyphs are in capitals but lower-case letters are rendered using smaller capital letters.
+    AllSmallCaps
+        All glyphs are rendered as smaller capital letters.
+    PetiteCaps
+        All glyphs are in petite capitals but lower-case letters are rendered using smaller petite capital letters.
+    AllPetiteCaps
+        All glyphs are rendered as smaller petite capital letters.
+    Unicase
+        Mixed where small capitals are rendered for uppercase letters and normal lowercase letters.
+    TitlingCaps
+        Capitals for titles.
+    """
+    Normal = "normal"
+    SmallCaps = "small-caps"
+    AllSmallCaps = "all-small-caps"
+    PetiteCaps = "petite-caps"
+    AllPetiteCaps = "all-petite-caps"
+    Unicase = "unicase"
+    TitlingCaps = "titling-caps"
+
+
+
+class FontStretch(enum.Enum):
+    """Font stretch
+
+    Attributes
+    ----------
+    UltraCondensed
+    ExtraCondensed
+    Condensed
+    SemiCondensed
+    Normal
+    SemiExpanded
+    Expanded
+    ExtraExpanded
+    UltraExpanded
+    """
+    UltraCondensed = "ultra-condensed"
+    ExtraCondensed = "extra-condensed"
+    Condensed = "condensed"
+    SemiCondensed = "semi-condensed"
+    Normal = "normal"
+    SemiExpanded = "semi-expanded"
+    Expanded = "expanded"
+    ExtraExpanded = "extra-expanded"
+    UltraExpanded = "ultra-expanded"
+
+
+
+class FontWeight(enum.Enum):
+    """Font weight
+
+    Attributes
+    ----------
+    Normal
+    Bold
+    Lighter
+    Bolder
+    """
+    Normal = "normal"
+    Bold = "bold"
+    Lighter = "lighter"
+    Bolder = "bolder"
+
+
+
+class FontSize(enum.Enum):
+    """Font sizes
+
+    Attributes
+    ----------
+    XXSmall
+        Extra-extra small absolute font size.
+    XSmall
+        Extra small absolute font size.
+    Small
+        Small absolute font size.
+    Medium
+        Medium absolute font size.
+    Large
+        Large absolute font size.
+    XLarge
+        Extra large absolute font size.
+    XXLarge
+        Extra-extra large absolute font size.
+    XXXLarge
+        Extra-extra-extra large absolute font size.
+    Smaller
+        Smaller relative font size (compared to parent element).
+    Larger
+        Larger relative font size (compared to parent element).
+    """
+    XXSmall = "xx-small"
+    XSmall = "x-small"
+    Small = "small"
+    Medium = "medium"
+    Large = "large"
+    XLarge = "x-large"
+    XXLarge = "xx-large"
+    XXXLarge = "xxx-large"
+    Smaller = "smaller"
+    Larger = "larger"
+
+
+
+class Font(AttributeBase):
+    """Mixin to store font information
+    """
+
+    def __init__(self, font_family: str=None, font_size: Union[FontSize,str]=None, font_stretch: Union[FontStretch,str]=None,
+                 font_style: FontStyle=None, font_variant: FontVariant=None, font_weight: Union[FontWeight,str]=None, **kwargs):
+        """Initialise
+
+        Parameters
+        ----------
+        font_family : str, optional
+            Font family string, can give a prioritised string, e.g., "Arial, Helvetica, sans-serif" by default None
+        font_size : Union[FontSize,str], optional
+            Size of the font, can be a FontSize, or a size string with units, e.g., "12pt", by default None
+        font_stretch : Union[FontStretch,str], optional
+            Stretching of the font, can be a FontStretch or a string with stretch %, by default None
+        font_style : FontStyle, optional
+            Style for the string, e.g., italic, by default None
+        font_variant : FontVariant, optional
+            Variant, e.g., all caps, by default None
+        font_weight : Union[FontWeight,str], optional
+            Weight, can be a FontWeight, e.g., FontWeight.Bolder, or a size string, e.g., "900", by default None
+        """
+        self._font_family = font_family
+        self._font_size = font_size
+        self._font_stretch = font_stretch
+        self._font_style = font_style
+        self._font_variant = font_variant
+        self._font_weight = font_weight
+        super(Font, self).__init__(**kwargs)
+
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+        """Set the attributes in the XML tree element
+
+        Sets the font attributes in the tag.
+
+        Parameters
+        ----------
+        element : Union[ET.Element,ET.SubElement]
+            The XML tree element that this method adds the attributes to.
+        """
+        if self._font_family is not None:
+            element.set('font-family', self._font_family)
+        if self._font_size is not None:
+            if isinstance(self._font_size, FontSize):
+                element.set('font-size', self._font_size.value)
+            else:
+                element.set('font-size', self._font_size)
+        if self._font_stretch is not None:
+            if isinstance(self._font_stretch, FontStretch):
+                element.set('font-stretch', self._font_stretch.value)
+            else:
+                element.set('font-stretch', self._font_stretch)
+        if self._font_style is not None:
+            element.set('font-style', self._font_style.value)
+        if self._font_variant is not None:
+            element.set('font-variant', self._font_variant.value)
+        if self._font_weight is not None:
+            if isinstance(self._font_weight, FontWeight):
+                element.set('font-weight', self._font_weight.value)
+            else:
+                element.set('font-weight', self._font_weight)
+        super(Font, self).set_element_attributes(element)
