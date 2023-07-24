@@ -157,7 +157,7 @@ class LineToDelta:
 
 
 
-class Line:
+class PathLine:
     """Draws a line from one position to another
     """
     def __init__(self, x0: float, y0: float, x1: float, y1: float):
@@ -187,7 +187,7 @@ class Line:
         str
             String representation of drawing command.
         """
-        return 'Line({},{} to {},{})'.format(self._x0,self._y0,self._x1,self._y1)
+        return 'PathLine({},{} to {},{})'.format(self._x0,self._y0,self._x1,self._y1)
 
     def __str__(self) -> str:
         """Return the SVG path drawing commands
