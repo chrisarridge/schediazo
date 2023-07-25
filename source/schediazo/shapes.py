@@ -5,6 +5,7 @@ import numpy as np
 
 from .attributes import Styling, Stroke, Fill, Transform, Clip
 from .part import PartBase
+from .paths import *
 
 class Line(Stroke,Transform,Clip,Styling,PartBase):
     """Line
@@ -31,6 +32,15 @@ class Line(Stroke,Transform,Clip,Styling,PartBase):
         super(Line,self).__init__(**kwargs)
         self._tag = 'line'
 
+    def __repr__(self) -> str:
+        """Generate readable summary
+
+        Returns
+        -------
+        str
+        """
+        return "Line(shape)({},{} to {},{})".format(self._x1, self._y1, self._x2, self._y2)
+
     def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
         """Set SVG attributes for the line element.
 
@@ -44,6 +54,16 @@ class Line(Stroke,Transform,Clip,Styling,PartBase):
         element.set('x2', str(self._x2))
         element.set('y2', str(self._y2))
         super(Line, self).set_element_attributes(element)
+
+    def to_path(self) -> RawPath:
+        """Convert shape into a path object.
+
+        Returns
+        -------
+        RawPath
+            Path representing the shape.
+        """
+        return RawPath([MoveTo(self._x1, self._y1), LineTo(self._x2, self._y2)])
 
 
 
@@ -82,6 +102,27 @@ class Circle(Stroke,Fill,Transform,Clip,Styling,PartBase):
         element.set('r', str(self._r))
         super(Circle, self).set_element_attributes(element)
 
+    def __repr__(self) -> str:
+        """Generate readable summary
+
+        Returns
+        -------
+        str
+        """
+        return "Circle(shape)(origin={},{} radius={})".format(self._cx, self._cy, self._r)
+
+    def to_path(self) -> RawPath:
+        """Convert shape into a path object.
+
+        Returns
+        -------
+        RawPath
+            Path representing the shape.
+        """
+        th = np.linspace(0, 2*np.pi, 32)
+        p = RawPath([MoveTo(self._cx + self._r*np.cos(th[0]), self._cy + self._r*np.sin(th[0]))], closed=True)
+        [p.append(LineTo(self._cx + self._r*np.cos(th[i]), self._cy + self._r*np.sin(th[i]))) for i in range(1,len(th))]
+        return p
 
 
 class Ellipse(Stroke,Fill,Transform,Clip,Styling,PartBase):
@@ -123,6 +164,27 @@ class Ellipse(Stroke,Fill,Transform,Clip,Styling,PartBase):
         element.set('ry', str(self._ry))
         super(Ellipse, self).set_element_attributes(element)
 
+    def __repr__(self) -> str:
+        """Generate readable summary
+
+        Returns
+        -------
+        str
+        """
+        return "Ellipse(shape)(origin={},{} radius={},{})".format(self._cx, self._cy, self._rx, self._ry)
+
+    def to_path(self) -> RawPath:
+        """Convert shape into a path object.
+
+        Returns
+        -------
+        RawPath
+            Path representing the shape.
+        """
+        th = np.linspace(0, 2*np.pi, 32)
+        p = RawPath([MoveTo(self._cx + self._rx*np.cos(th[0]), self._cy + self._ry*np.sin(th[0]))], closed=True)
+        [p.append(LineTo(self._cx + self._rx*np.cos(th[i]), self._cy + self._ry*np.sin(th[i]))) for i in range(1,len(th))]
+        return p
 
 
 class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
@@ -151,6 +213,10 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
         self._height = height
         self._rx = rx
         self._ry = ry
+        if self._rx is None and self._ry is not None:
+            self._rx = self._ry
+        if self._rx is not None and self._ry is None:
+            self._ry = self._rx
         super(Rect,self).__init__(**kwargs)
         self._tag = 'rect'
 
@@ -172,6 +238,72 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
             element.set('ry', str(self._ry))
         super(Rect, self).set_element_attributes(element)
 
+    def __repr__(self) -> str:
+        """Generate readable summary
+
+        Returns
+        -------
+        str
+        """
+        return "Rect(shape)(origin={},{} width={} height={})".format(self._x, self._y, self._width, self._height)
+
+    def to_path(self) -> RawPath:
+        """Convert shape into a path object.
+
+        Returns
+        -------
+        RawPath
+            Path representing the shape.
+        """
+        if self._rx is None and self._ry is None:
+            return RawPath([MoveTo(self._x,self._y),HlineToDelta(self._width),VlineToDelta(self._height),HlineToDelta(-self._width),VlineToDelta(-self._height)], closed=True)
+
+        else:
+
+            # Start at the point just after (in x) the rounded corner at the top-left.
+            # ╭──────╮
+            # │      │  
+            # ╰──────╯
+            p = RawPath([MoveTo(self._x+self._rx, self._y)], closed=True)
+
+            # Draw the straight top edge.
+            p.append(HlineToDelta(self._width-2*self._rx))
+
+            # Draw the rounded corner.
+            th = np.linspace(-0.5*np.pi, 0.0, 8)
+            cx = self._x+self._width-self._rx
+            cy = self._y+self._ry
+            print(cx, self._rx)
+            [p.append(LineTo(cx + self._rx*np.cos(th[i]), cy + self._ry*np.sin(th[i]))) for i in range(1,len(th))]
+
+            # Draw the vertical right-hand line.
+            p.append(VlineToDelta(self._height-2*self._ry))
+
+            # Draw the rounded (bottom-right) corner.
+            th = np.linspace(0.0, 0.5*np.pi, 8)
+            cx = self._x+self._width-self._rx
+            cy = self._y+self._height-self._ry
+            [p.append(LineTo(cx + self._rx*np.cos(th[i]), cy + self._ry*np.sin(th[i]))) for i in range(1,len(th))]
+
+            # Draw the bottom line.
+            p.append(HlineToDelta(-(self._width-2*self._rx)))
+
+            # Draw the bottom-right corner.
+            th = np.linspace(0.5*np.pi, np.pi, 8)
+            cx = self._x+self._rx
+            cy = self._y+self._height-self._ry
+            [p.append(LineTo(cx + self._rx*np.cos(th[i]), cy + self._ry*np.sin(th[i]))) for i in range(1,len(th))]
+
+            # Draw the left-hand vertical line.
+            p.append(VlineToDelta(-(self._height-2*self._ry)))
+
+            # Draw the top-left corner.
+            th = np.linspace(-np.pi, -0.5*np.pi, 8)
+            cx = self._x+self._rx
+            cy = self._y+self._ry
+            [p.append(LineTo(cx + self._rx*np.cos(th[i]), cy + self._ry*np.sin(th[i]))) for i in range(1,len(th))]
+
+            return p
 
 
 class Polyline(Stroke,Fill,Transform,Clip,Styling,PartBase):
@@ -202,6 +334,25 @@ class Polyline(Stroke,Fill,Transform,Clip,Styling,PartBase):
         """
         element.set('points', ''.join(['{},{} '.format(xi,yi) for xi,yi in zip(self._x,self._y)]))
         super(Polyline, self).set_element_attributes(element)
+
+    def __repr__(self) -> str:
+        """Generate readable summary
+
+        Returns
+        -------
+        str
+        """
+        return "Polyline(shape)(with {} points)".format(len(self._x))
+
+    def to_path(self) -> RawPath:
+        """Convert shape into a path object.
+
+        Returns
+        -------
+        RawPath
+            Path representing the shape.
+        """
+        return RawPath([MoveTo(self._x[0], self._y[0])]+[LineTo(x, y) for x,y in zip(self._x[1:],self._y[1:])])
 
 
 
@@ -235,6 +386,25 @@ class Polygon(Stroke,Fill,Transform,Clip,Styling,PartBase):
         element.set('points', ''.join(['{},{} '.format(xi,yi) for xi,yi in zip(self._x,self._y)]))
         super(Polygon, self).set_element_attributes(element)
 
+    def __repr__(self) -> str:
+        """Generate readable summary
+
+        Returns
+        -------
+        str
+        """
+        return "Polygon(shape)(with {} points)".format(len(self._x))
+
+    def to_path(self) -> RawPath:
+        """Convert shape into a path object.
+
+        Returns
+        -------
+        RawPath
+            Path representing the shape.
+        """
+        return RawPath([MoveTo(self._x[0], self._y[0])]+[LineTo(x, y) for x,y in zip(self._x[1:],self._y[1:])]+[LineTo(self._x[0], self._y[0])], closed=True)
+
 
 
 class EquilateralTriangle(Polygon):
@@ -260,3 +430,12 @@ class EquilateralTriangle(Polygon):
         super(EquilateralTriangle, self).__init__(
                     [x0 + xp*side for xp in [0, 0.5, -0.5, 0]],
                     [-yorigin + y0 + yp*side for yp in [-hh, hh, hh, -hh]], **kwargs)
+
+    def __repr__(self) -> str:
+        """Generate readable summary
+
+        Returns
+        -------
+        str
+        """
+        return "EquilateralTriangle(shape)(with position {},{} and side={})".format(len(self._x0, self._y0, self._side))
