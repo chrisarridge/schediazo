@@ -1,10 +1,9 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "schediazo"
-version = "0.1.0"
 description = "Vector drawing package in Python"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -24,6 +23,8 @@ classifiers = ["Development Status :: 2 - Pre-Alpha",
                 "Topic :: Multimedia :: Graphics :: Editors :: Vector-Based",
                 "Topic :: Scientific/Engineering :: Visualization",
                 "Topic :: Software Development :: Libraries :: Python Modules"]
+dynamic= ["version"]
+
 dependencies = [
         'numpy',
         'pillow']
@@ -37,3 +38,6 @@ dependencies = [
 where = ["source"]
 include = ["schediazo"]
 exclude = []
+
+[tool.setuptools_scm]
+write_to = "source/schediazo/_version.py"

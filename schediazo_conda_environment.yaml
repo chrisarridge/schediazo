@@ -1,0 +1,11 @@
+name: schediazo_dev
+
+dependencies:
+  - python=3.8
+  - ipython
+  - matplotlib
+  - sphinx
+  - sphinx_rtd_theme
+  - pillow
+  - pip
+  - git
