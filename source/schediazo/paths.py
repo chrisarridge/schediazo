@@ -612,10 +612,10 @@ class QuadraticBezierToDelta:
         return 'q {} {}, {} {}'.format(self._dxc,self._dyc,self._dx,self._dy)
 
 
-_COMMAND_CLASSES = (MoveTo,MoveToDelta,LineTo,LineToDelta,Line,
+_COMMAND_CLASSES = (MoveTo,MoveToDelta,LineTo,LineToDelta,PathLine,
                     HlineTo,HlineToDelta,Hline,VlineTo,VlineToDelta,Vline,
                     CubicBezierTo,CubicBezierToDelta,QuadraticBezierTo,QuadraticBezierToDelta)
-_COMMAND_UNION = Union[MoveTo,MoveToDelta,LineTo,LineToDelta,Line,
+_COMMAND_UNION = Union[MoveTo,MoveToDelta,LineTo,LineToDelta,PathLine,
                     HlineTo,HlineToDelta,Hline,VlineTo,VlineToDelta,Vline,
                     CubicBezierTo,CubicBezierToDelta,QuadraticBezierTo,QuadraticBezierToDelta]
 
