@@ -21,3 +21,10 @@ path = sc.RawPath([sc.MoveTo(10,90),sc.QuadraticBezierTo(90,90,90,45),sc.Quadrat
 d.add(sc.Path(path, id="MyPath", fill="none", stroke="red"))
 d.add(sc.TextPath("Quick brown fox jumps over the lazy dog.", href="#MyPath"))
 d.save('example_text2')
+
+d = sc.Drawing()
+d.add(sc.Line(100,0, 100,80, stroke="grey", stroke_width="2px"))
+d.add(sc.Text("Left-aligned", x=100, y=20, text_anchor=sc.TextAnchor.Start, fill="black", font_family="sans-serif", font_size="14px"))
+d.add(sc.Text("Centred", x=100, y=40, text_anchor=sc.TextAnchor.Middle, fill="black", font_family="sans-serif", font_size="14px"))
+d.add(sc.Text("Right-aligned", x=100, y=60, text_anchor=sc.TextAnchor.End, fill="black", font_family="sans-serif", font_size="14px"))
+d.save('example_text3')

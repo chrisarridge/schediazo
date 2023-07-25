@@ -3,12 +3,12 @@ from typing import List, Union
 
 import numpy as np
 
-from .attributes import Styling, Stroke, Fill, Transform, Clip, Font
+from .attributes import Styling, Stroke, Fill, Transform, Clip, Font, TextRendering
 from .part import PartBase
 from .paths import RawPath
 
 
-class Text(Stroke,Fill,Transform,Clip,Styling,Font,PartBase):
+class Text(TextRendering,Stroke,Fill,Transform,Clip,Styling,Font,PartBase):
     """Text
     """
     def __init__(self, text: str, x: float=None, y: float=None, dx: float=None, dy: float=None,
@@ -62,7 +62,7 @@ class Text(Stroke,Fill,Transform,Clip,Styling,Font,PartBase):
 
 
 
-class TextPath(Stroke,Fill,Transform,Clip,Styling,PartBase):
+class TextPath(TextRendering,Stroke,Fill,Transform,Clip,Styling,PartBase):
     """Text rendered along a path
     """
     def __init__(self, text: str, href: str, side: str=None, start_offset: str=None, path: RawPath=None, **kwargs):

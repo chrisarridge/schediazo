@@ -468,3 +468,51 @@ class Font(AttributeBase):
             else:
                 element.set('font-weight', self._font_weight)
         super(Font, self).set_element_attributes(element)
+
+
+
+class TextAnchor(enum.Enum):
+    """Text anchoring
+
+    Attributes
+    ----------
+    Start
+    Middle
+    End
+    """
+    Start = "start"
+    Middle = "middle"
+    End = "end"
+
+
+class TextRendering(AttributeBase):
+    """Mixin to store text rendering information
+    """
+
+    def __init__(self, text_anchor: TextAnchor=None, **kwargs):
+        """Initialise
+
+        Parameters
+        ----------
+        text_anchor : TextAnchor, optional
+            Anchor point for the for the string, e.g., middle, by default None (start).
+        """
+        self._text_anchor = text_anchor
+        super(TextRendering, self).__init__(**kwargs)
+
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+        """Set the attributes in the XML tree element
+
+        Sets the text rendering attributes in the tag.
+
+        Parameters
+        ----------
+        element : Union[ET.Element,ET.SubElement]
+            The XML tree element that this method adds the attributes to.
+        """
+        if self._text_anchor is not None:
+            if isinstance(self._text_anchor, TextAnchor):
+                element.set('text-anchor', self._text_anchor.value)
+            else:
+                raise ValueError
+        super(TextRendering, self).set_element_attributes(element)

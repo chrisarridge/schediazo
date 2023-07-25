@@ -19,4 +19,4 @@ from .paths import Path, RawPath, MoveTo,MoveToDelta,LineTo,LineToDelta,PathLine
 from .units import mm, cm, m, inch
 from .transforms import Affine, identity
 from .svg import Versions
-from .attributes import FontStyle, FontVariant, FontStretch, FontWeight, FontSize
+from .attributes import FontStyle, FontVariant, FontStretch, FontWeight, FontSize, TextAnchor
