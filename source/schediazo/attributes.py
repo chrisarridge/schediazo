@@ -241,7 +241,7 @@ class Fill(AttributeBase):
         if self._fill is not None:
             element.set('fill', self._fill)
         if self._fill_opacity is not None:
-            element.set('fill-opacity', self._fill_opacity)
+            element.set('fill-opacity', str(self._fill_opacity))
         super(Fill, self).set_element_attributes(element)
 
 
