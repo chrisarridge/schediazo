@@ -8,4 +8,6 @@ dependencies:
   - sphinx_rtd_theme
   - pillow
   - pip
+  - pip:
+    - tinycss2
   - git
