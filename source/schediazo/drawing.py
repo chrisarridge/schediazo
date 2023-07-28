@@ -7,6 +7,8 @@ import copy
 import tinycss2
 import tinycss2.ast
 
+import pint
+
 from .part import PartDict, PartBase
 from .svg import Versions
 

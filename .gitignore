@@ -3,3 +3,4 @@
 *.egg-info*
 build/
 source/schediazo/_version.py
+style_example.svg

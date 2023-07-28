@@ -16,7 +16,8 @@ from .text import Text, TextPath
 from .image import Image
 from .containers import Group, ClipPath
 from .paths import Path, RawPath, MoveTo,MoveToDelta,LineTo,LineToDelta,PathLine,HlineTo,HlineToDelta,Hline,VlineTo,VlineToDelta,Vline,CubicBezierTo,CubicBezierToDelta,QuadraticBezierTo,QuadraticBezierToDelta
-from .units import mm, cm, m, inch
+from .units import ureg, Q_, cm, mm, m, inch, pt, pc
 from .transforms import Affine, identity
 from .svg import Versions
 from .attributes import FontStyle, FontVariant, FontStretch, FontWeight, FontSize, TextAnchor
+

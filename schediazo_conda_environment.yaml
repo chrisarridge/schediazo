@@ -10,4 +10,5 @@ dependencies:
   - pip
   - pip:
     - tinycss2
+    - pint
   - git
