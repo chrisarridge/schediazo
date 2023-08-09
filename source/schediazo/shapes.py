@@ -2,27 +2,31 @@ import xml.etree.ElementTree as ET
 from typing import List, Union
 
 import numpy as np
+import pint
 
 from .attributes import Styling, Stroke, Fill, Transform, Clip
 from .part import PartBase
 from .paths import *
+from .units import _toquantity, _toquantity_array, _tostr
 
 class Line(Stroke,Transform,Clip,Styling,PartBase):
     """Line
     """
 
-    def __init__(self, x1: float, y1: float, x2: float, y2: float, **kwargs):
+    def __init__(self, x1: pint.Quantity, y1: pint.Quantity,
+                 x2: pint.Quantity, y2: pint.Quantity,
+                 **kwargs):
         """Initialise
 
         Parameters
         ----------
-        x1 : float
+        x1 : pint.Quantity
             Start x coordinate for the line.
-        y1 : float
+        y1 : pint.Quantity
             Start y coordinate for the line.
-        x2 : float
+        x2 : pint.Quantity
             End x coordinate for the line.
-        y2 : float
+        y2 : pint.Quantity
             End y coordinate for the line.
         """
         self._x1 = x1
@@ -39,21 +43,24 @@ class Line(Stroke,Transform,Clip,Styling,PartBase):
         -------
         str
         """
-        return "Line(shape)({},{} to {},{})".format(self._x1, self._y1, self._x2, self._y2)
+        return "Line(shape)({},{} to {},{})".format(_tostr(self._x1), _tostr(self._y1), _tostr(self._x2), _tostr(self._y2))
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set SVG attributes for the line element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'x1', 'y1', 'x2' and 'y2' attributes.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
-        element.set('x1', str(self._x1))
-        element.set('y1', str(self._y1))
-        element.set('x2', str(self._x2))
-        element.set('y2', str(self._y2))
-        super(Line, self).set_element_attributes(element)
+        element.set('x1', _tostr(self._x1))
+        element.set('y1', _tostr(self._y1))
+        element.set('x2', _tostr(self._x2))
+        element.set('y2', _tostr(self._y2))
+        super(Line, self).set_element_attributes(element, dpi=dpi)
 
     def to_path(self) -> RawPath:
         """Convert shape into a path object.
@@ -71,16 +78,16 @@ class Circle(Stroke,Fill,Transform,Clip,Styling,PartBase):
     """Circle part
     """
 
-    def __init__(self, cx: float, cy: float, r: float, **kwargs):
+    def __init__(self, cx: pint.Quantity, cy: pint.Quantity, r: pint.Quantity, **kwargs):
         """Initialise
 
         Parameters
         ----------
-        cx : float
+        cx : pint.Quantity
             Absolute x coordinate of the centre of the circle.
-        cy : float
+        cy : pint.Quantity
             Absolute y coordinate of the centre of the circle.
-        r : float
+        r : pint.Quantity
             Radius of the circle.
         """
         self._cx = cx
@@ -89,18 +96,21 @@ class Circle(Stroke,Fill,Transform,Clip,Styling,PartBase):
         super(Circle,self).__init__(**kwargs)
         self._tag = 'circle'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set SVG attributes for the circle element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'cx', 'cy' and 'r' attributes.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
-        element.set('cx', str(self._cx))
-        element.set('cy', str(self._cy))
-        element.set('r', str(self._r))
-        super(Circle, self).set_element_attributes(element)
+        element.set('cx', _tostr(self._cx))
+        element.set('cy', _tostr(self._cy))
+        element.set('r', _tostr(self._r))
+        super(Circle, self).set_element_attributes(element, dpi=dpi)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -109,7 +119,7 @@ class Circle(Stroke,Fill,Transform,Clip,Styling,PartBase):
         -------
         str
         """
-        return "Circle(shape)(origin={},{} radius={})".format(self._cx, self._cy, self._r)
+        return "Circle(shape)(origin={},{} radius={})".format(_tostr(self._cx), _tostr(self._cy), _tostr(self._r))
 
     def to_path(self) -> RawPath:
         """Convert shape into a path object.
@@ -128,19 +138,19 @@ class Circle(Stroke,Fill,Transform,Clip,Styling,PartBase):
 class Ellipse(Stroke,Fill,Transform,Clip,Styling,PartBase):
     """Ellipse part
     """
-    def __init__(self, cx: float, cy: float, rx: float, ry: float, **kwargs):
+    def __init__(self, cx: pint.Quantity, cy: pint.Quantity,
+                        rx: pint.Quantity, ry: pint.Quantity, **kwargs):
         """Initialise
 
         Parameters
         ----------
-        cx : float
+        cx : pint.Quantity
             Absolute x coordinate of the centre of the ellipse.
-        cy : float
+        cy : pint.Quantity
             Absolute y coordinate of the centre of the ellipse.
-        rx : float
+        rx : pint.Quantity
             Radius of the ellipse in the x axis.
-            _description_
-        ry : float
+        ry : pint.Quantity
             Radius of the ellipse in the y axis.
         """
         self._cx = cx
@@ -150,19 +160,22 @@ class Ellipse(Stroke,Fill,Transform,Clip,Styling,PartBase):
         super(Ellipse,self).__init__(**kwargs)
         self._tag = 'ellipse'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set SVG attributes for the ellipse element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'cx', 'cy', 'rx' and 'ry' attributes.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
-        element.set('cx', str(self._cx))
-        element.set('cy', str(self._cy))
-        element.set('rx', str(self._rx))
-        element.set('ry', str(self._ry))
-        super(Ellipse, self).set_element_attributes(element)
+        element.set('cx', _tostr(self._cx))
+        element.set('cy', _tostr(self._cy))
+        element.set('rx', _tostr(self._rx))
+        element.set('ry', _tostr(self._ry))
+        super(Ellipse, self).set_element_attributes(element, dpi=dpi)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -171,7 +184,7 @@ class Ellipse(Stroke,Fill,Transform,Clip,Styling,PartBase):
         -------
         str
         """
-        return "Ellipse(shape)(origin={},{} radius={},{})".format(self._cx, self._cy, self._rx, self._ry)
+        return "Ellipse(shape)(origin={},{} radius={},{})".format(_tostr(self._cx), _tostr(self._cy), _tostr(self._rx), _tostr(self._ry))
 
     def to_path(self) -> RawPath:
         """Convert shape into a path object.
@@ -189,22 +202,24 @@ class Ellipse(Stroke,Fill,Transform,Clip,Styling,PartBase):
 
 class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
     """Rectangle"""
-    def __init__(self, x: float, y: float, width: float, height: float, rx: float=None, ry: float=None, **kwargs):
+    def __init__(self, x: pint.Quantity, y: pint.Quantity,
+                        width: pint.Quantity, height: pint.Quantity,
+                        rx: pint.Quantity=None, ry: pint.Quantity=None, **kwargs):
         """Initialise
 
         Parameters
         ----------
-        x : float
+        x : pint.Quantity
             Absolute x position for the rectangle.
-        y : float
+        y : pint.Quantity
             Absolute y position for the rectangle.
-        width : float
+        width : pint.Quantity
             Width of the rectangle.
-        height : float
+        height : pint.Quantity
             Height of the rectangle.
-        rx : float
+        rx : pint.Quantity
             Horizontal radius of the corner.
-        ry : float
+        ry : pint.Quantity
             Vertical radius of the corner.
         """
         self._x = x
@@ -220,23 +235,26 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
         super(Rect,self).__init__(**kwargs)
         self._tag = 'rect'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set SVG attributes for the rectangle element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'x', 'y', 'w' and 'h' attributes.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
-        element.set('x', str(self._x))
-        element.set('y', str(self._y))
-        element.set('width', str(self._width))
-        element.set('height', str(self._height))
+        element.set('x', _tostr(self._x))
+        element.set('y', _tostr(self._y))
+        element.set('width', _tostr(self._width))
+        element.set('height', _tostr(self._height))
         if self._rx is not None:
-            element.set('rx', str(self._rx))
+            element.set('rx', _tostr(self._rx))
         if self._ry is not None:
-            element.set('ry', str(self._ry))
-        super(Rect, self).set_element_attributes(element)
+            element.set('ry', _tostr(self._ry))
+        super(Rect, self).set_element_attributes(element, dpi=dpi)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -245,7 +263,7 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
         -------
         str
         """
-        return "Rect(shape)(origin={},{} width={} height={})".format(self._x, self._y, self._width, self._height)
+        return "Rect(shape)(origin={},{} width={} height={})".format(_tostr(self._x), _tostr(self._y), _tostr(self._width), _tostr(self._height))
 
     def to_path(self) -> RawPath:
         """Convert shape into a path object.
@@ -273,7 +291,6 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
             th = np.linspace(-0.5*np.pi, 0.0, 8)
             cx = self._x+self._width-self._rx
             cy = self._y+self._ry
-            print(cx, self._rx)
             [p.append(LineTo(cx + self._rx*np.cos(th[i]), cy + self._ry*np.sin(th[i]))) for i in range(1,len(th))]
 
             # Draw the vertical right-hand line.
@@ -309,31 +326,34 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
 class Polyline(Stroke,Fill,Transform,Clip,Styling,PartBase):
     """Polyline shape (open polygon)
     """
-    def __init__(self, x: Union[List[float],np.ndarray], y: Union[List[float],np.ndarray], **kwargs):
+    def __init__(self, x: pint.Quantity, y: pint.Quantity, **kwargs):
         """Initialise
 
         Parameters
         ----------
-        x : Union[List[float],np.ndarray]
+        x : pint.Quantity
             Absolute x coordinates for all the vertices along the polyline.
-        y : Union[List[float],np.ndarray]
+        y : pint.Quantity
             Absolute y coordinates for all the vertices along the polyline.
         """
-        self._x = np.array(x)
-        self._y = np.array(y)
+        self._x = x
+        self._y = y
         super(Polyline,self).__init__(**kwargs)
         self._tag = 'polyline'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set SVG attributes for the polyline element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'points' attribute.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
-        element.set('points', ''.join(['{},{} '.format(xi,yi) for xi,yi in zip(self._x,self._y)]))
-        super(Polyline, self).set_element_attributes(element)
+        element.set('points', ''.join(['{},{} '.format((xi*dpi).magnitude,(yi*dpi).magnitude) for xi,yi in zip(self._x,self._y)]))
+        super(Polyline, self).set_element_attributes(element, dpi=dpi)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -360,14 +380,14 @@ class Polygon(Stroke,Fill,Transform,Clip,Styling,PartBase):
     """Polygon shape (closed polyline)
     """
 
-    def __init__(self, x: Union[List[float],np.ndarray], y: Union[List[float],np.ndarray], **kwargs):
+    def __init__(self, x: pint.Quantity, y: pint.Quantity, **kwargs):
         """Initialise
 
         Parameters
         ----------
-        x : Union[List[float],np.ndarray]
+        x : pint.Quantity
             Absolute x coordinates for all the vertices along the polygon.
-        y : Union[List[float],np.ndarray]
+        y : pint.Quantity
             Absolute y coordinates for all the vertices along the polygon.
         """
         self._x = np.array(x)
@@ -375,16 +395,19 @@ class Polygon(Stroke,Fill,Transform,Clip,Styling,PartBase):
         super(Polygon,self).__init__(**kwargs)
         self._tag = 'polygon'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set SVG attributes for the ellipse element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'points' attribute.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
-        element.set('points', ''.join(['{},{} '.format(xi,yi) for xi,yi in zip(self._x,self._y)]))
-        super(Polygon, self).set_element_attributes(element)
+        element.set('points', ''.join(['{},{} '.format((xi*dpi).magnitude,(yi*dpi).magnitude) for xi,yi in zip(self._x,self._y)]))
+        super(Polygon, self).set_element_attributes(element, dpi=dpi)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -410,16 +433,16 @@ class Polygon(Stroke,Fill,Transform,Clip,Styling,PartBase):
 class EquilateralTriangle(Polygon):
     """Equilateral triangle shape using a polygon (closed polyline)
     """
-    def __init__(self, x0: float, y0: float, side: float, **kwargs):
+    def __init__(self, x0: pint.Quantity, y0: pint.Quantity, side: pint.Quantity, **kwargs):
         """Initialise
 
         Parameters
         ----------
-        x0 : float
+        x0 : pint.Quantity
             Absolute x coordinate for the left-hand side of the triangle.
-        y0 : float
+        y0 : pint.Quantity
             Absolute y coordinate for the centre of the triangle.
-        side : float
+        side : pint.Quantity
             Length of each side of the equilateral triangle.
         """
         self._x0 = x0
