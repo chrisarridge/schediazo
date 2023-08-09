@@ -51,3 +51,24 @@ class ClipPath(PartDict):
         if self._clip_path_units is not None:
             element.set('clipPathUnits', self._clip_path_units)
         super(ClipPath, self).set_element_attributes(element)
+
+
+
+class Definitions(PartDict):
+    """Set of definitions that can be used throughout a drawing.
+    """
+    def __init__(self):
+        """Initialise
+        """
+        super(Definitions,self).__init__()
+        self._tag = 'defs'
+
+    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element]):
+        """Set the SVG element attributes.
+
+        Parameters
+        ----------
+        element : Union[ET.SubElement,ET.Element]
+            Element to create the defs tag under.
+        """
+        super(Definitions, self).set_element_attributes(element)

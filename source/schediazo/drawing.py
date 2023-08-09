@@ -9,46 +9,84 @@ import tinycss2.ast
 
 import pint
 
+from .units import _tostr
 from .part import PartDict, PartBase
+from .containers import Definitions
 from .svg import Versions
+from ._paper import PaperSize
 
-class Definitions(PartDict):
-    """Set of definitions that can be used throughout a drawing.
-    """
-    def __init__(self):
-        super(Definitions,self).__init__()
-        self._tag = 'defs'
-
-    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element]):
-        """Set the SVG element attributes.
-
-        Parameters
-        ----------
-        element : Union[ET.SubElement,ET.Element]
-            Element to create the clip path under.
-        """
-        super(Definitions, self).set_element_attributes(element)
 
 
 class Drawing(PartDict):
     """Drawing
     """
-    def __init__(self, **kwargs):
+    def __init__(self, width: pint.Quantity=None, height: pint.Quantity=None, paper: PaperSize=None, orientation: str=None, **kwargs):
+        # Do basic type and value checking on inputs.
+        if width is not None:
+            if not isinstance(width,pint.Quantity):
+                raise TypeError("Width must be a number with units (pint.Unit) but received {}".format(type(width)))
+        if height is not None:
+            if not isinstance(height,pint.Quantity):
+                raise TypeError("Height must be a number with units (pint.Unit) but received {}".format(type(height)))
+        if width is None and height is not None:
+            print("Provided with height but no width - ignoring size specification")
+        if width is not None and height is None:
+            print("Provided with width but no height - ignoring size specification")
+        if paper is not None:
+            if not isinstance(paper, PaperSize):
+                raise TypeError("Not a PaperSize value")
+        if orientation is not None:
+            if not isinstance(orientation, str):
+                raise TypeError("Orientation must be a string")
+            if not (orientation=="portrait" or orientation=="landscape"):
+                raise TypeError("Orientation must be portrait or landscape")
+
+        # Setup basic elements of the object.
         self._root = None
         self._definitions = Definitions()
         self._styles = []
+
+        # Set the width and height.
+        self._width = None
+        self._height = None
+
+        if paper is not None:
+            # PaperSize tuples are portrait by definition
+            self._width = paper.value[0]
+            self._height = paper.value[1]
+
+            if orientation is not None:
+                if orientation=="landscape":
+                    self._width = paper.value[1]
+                    self._height = paper.value[0]
+
+        if width is not None and height is not None:
+            if paper is not None:
+                print("Provided both width/height and a PaperSize, ignoring the PaperSize")
+
+            if isinstance(width,(int,float)):
+                self._width = float(width)*usr
+            else:
+                self._width = width
+            if isinstance(height,(int,float)):
+                self._height = float(height)*usr
+            else:
+                self._height = height
+
         super(Drawing, self).__init__(**kwargs)
 
-    def save(self, _filename: str, compressed: bool=False, version: Versions = Versions.SVG11):
+
+    def save(self, _filename: str, compressed: bool=False, version: Versions = Versions.SVG11, pretty=False):
         self._root = ET.Element('svg')
         self._root.set('xmlns', 'http://www.w3.org/2000/svg')
         self._root.set('xmlns:xlink', 'http://www.w3.org/1999/xlink')
         self._root.set('version', version.value)
 
-        # Get dimensions and set width and height.
-        #     self._root.set('width', str(self._width))
-        #     self._root.set('height', str(self._height))
-        #     self._root.set('viewBox', '{} {} {} {}'.format(self._viewbox[0], self._viewbox[1], self._viewbox[2], self._viewbox[3]))
+        # Set the dimensions.
+        if self._width is not None:
+            self._root.set("width", _tostr(self._width))
+        if self._height is not None:
+            self._root.set("height", _tostr(self._height))
 
         # Add all the definition objects.
         if len(self._definitions)>0:
@@ -72,12 +110,15 @@ class Drawing(PartDict):
         for child in self:
             self[child].create_element(self._root)
 
+        # Write the file.
         if compressed:
             fh = gzip.open(_filename + '.svgz', mode='wb')
             ET.ElementTree(self._root).write(fh)
         else:
-#            ET.indent(self._root, space="\t", level=0)
+            if pretty:
+                ET.indent(self._root, space="\t", level=0)
             ET.ElementTree(self._root).write(_filename + '.svg')
+
 
     def add_def(self, part: Union[PartBase,PartDict]):
         """Add a definition to the drawing.
@@ -88,6 +129,7 @@ class Drawing(PartDict):
             The part to add as a definition.
         """
         self._definitions.add(part)
+
 
     def add_style(self, style_string: str):
         """Parses a string of CSS and adds it to the list of styles
