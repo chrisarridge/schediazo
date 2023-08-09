@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 import uuid
 import base64
 
+import pint
 
 def generate_id() -> str:
     """Generate a random ID string for an element.
@@ -45,13 +46,16 @@ class PartBase:
     def __repr__(self) -> str:
         return 'PartBase({})'.format(self._id)
 
-    def create_element(self, root: Union[ET.Element,ET.SubElement]) -> ET.SubElement:
+    def create_element(self, root: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None) -> ET.SubElement:
         """Create the XML element
 
         Parameters
         ----------
         root : Union[ET.Element,ET.SubElement]
             XML Element to create this new element under.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
 
         Returns
         -------
@@ -59,16 +63,20 @@ class PartBase:
             Created XML element.
         """
         element = ET.SubElement(root, self._tag)
-        self.set_element_attributes(element)
+        self.set_element_attributes(element, dpi=dpi)
         return element
 
-    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element]):
+    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element], dpi: pint.Quantity=None):
         """Set the SVG element attributes.
 
         Parameters
         ----------
         element : Union[ET.SubElement,ET.Element]
             Element to set the attributes in.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
+
         """
         element.set('id', self._id)
 
@@ -136,13 +144,16 @@ class PartDict(dict):
         """
         self[part.id] = part
 
-    def create_element(self, root: Union[ET.Element,ET.SubElement]) -> ET.SubElement:
+    def create_element(self, root: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None) -> ET.SubElement:
         """Create the XML element and all the child elements.
 
         Parameters
         ----------
         root : Union[ET.Element,ET.SubElement]
             XML Element to create this new element under.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
 
         Returns
         -------
@@ -150,18 +161,22 @@ class PartDict(dict):
             Created XML element.
         """
         element = ET.SubElement(root, self._tag)
-        self.set_element_attributes(element)
+        self.set_element_attributes(element, dpi=dpi)
         for child in self:
-            self[child].create_element(element)
+            self[child].create_element(element, dpi=dpi)
         return element
 
-    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element]):
+    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element], dpi: pint.Quantity=None):
         """Set the SVG element attributes.
 
         Parameters
         ----------
         element : Union[ET.SubElement,ET.Element]
             Element to set the attributes in.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
+
         """
         element.set('id', self._id)
 
