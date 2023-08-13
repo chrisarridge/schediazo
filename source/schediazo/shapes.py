@@ -7,7 +7,7 @@ import pint
 from .attributes import Styling, Stroke, Fill, Transform, Clip
 from .part import PartBase
 from .paths import *
-from .units import _tostr
+from .units import _tostr, ureg, Q_
 
 class Line(Stroke,Transform,Clip,Styling,PartBase):
     """Line
@@ -48,22 +48,26 @@ class Line(Stroke,Transform,Clip,Styling,PartBase):
         """
         return "Line(shape)({},{} to {},{})".format(_tostr(self._x1), _tostr(self._y1), _tostr(self._x2), _tostr(self._y2))
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], 
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
         """Set SVG attributes for the line element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'x1', 'y1', 'x2' and 'y2' attributes.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
         """
         element.set('x1', _tostr(self._x1))
         element.set('y1', _tostr(self._y1))
         element.set('x2', _tostr(self._x2))
         element.set('y2', _tostr(self._y2))
-        super(Line, self).set_element_attributes(element, dpi=dpi)
+        super(Line, self).set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
 
     def to_path(self) -> RawPath:
         """Convert shape into a path object.
@@ -102,21 +106,25 @@ class Circle(Stroke,Fill,Transform,Clip,Styling,PartBase):
         super(Circle,self).__init__(**kwargs)
         self._tag = 'circle'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], 
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
         """Set SVG attributes for the circle element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'cx', 'cy' and 'r' attributes.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
         """
         element.set('cx', _tostr(self._cx))
         element.set('cy', _tostr(self._cy))
         element.set('r', _tostr(self._r))
-        super(Circle, self).set_element_attributes(element, dpi=dpi)
+        super(Circle, self).set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -169,22 +177,26 @@ class Ellipse(Stroke,Fill,Transform,Clip,Styling,PartBase):
         super(Ellipse,self).__init__(**kwargs)
         self._tag = 'ellipse'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], 
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
         """Set SVG attributes for the ellipse element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'cx', 'cy', 'rx' and 'ry' attributes.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
         """
         element.set('cx', _tostr(self._cx))
         element.set('cy', _tostr(self._cy))
         element.set('rx', _tostr(self._rx))
         element.set('ry', _tostr(self._ry))
-        super(Ellipse, self).set_element_attributes(element, dpi=dpi)
+        super(Ellipse, self).set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -253,16 +265,20 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
         super(Rect,self).__init__(**kwargs)
         self._tag = 'rect'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], 
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
         """Set SVG attributes for the rectangle element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'x', 'y', 'w' and 'h' attributes.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
         """
         element.set('x', _tostr(self._x))
         element.set('y', _tostr(self._y))
@@ -272,7 +288,7 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
             element.set('rx', _tostr(self._rx))
         if self._ry is not None:
             element.set('ry', _tostr(self._ry))
-        super(Rect, self).set_element_attributes(element, dpi=dpi)
+        super(Rect, self).set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -344,36 +360,49 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
 class Polyline(Stroke,Fill,Transform,Clip,Styling,PartBase):
     """Polyline shape (open polygon)
     """
-    def __init__(self, x: pint.Quantity, y: pint.Quantity, **kwargs):
+    def __init__(self, x: Union[List[pint.Quantity],pint.Quantity], y: Union[List[pint.Quantity],pint.Quantity], **kwargs):
         """Initialise
 
         Parameters
         ----------
-        x : pint.Quantity
-            Absolute x coordinates for all the vertices along the polyline.
-        y : pint.Quantity
-            Absolute y coordinates for all the vertices along the polyline.
+        x : Union[List[pint.Quantity],pint.Quantity]
+            Absolute x coordinates for all the vertices along the polygon.
+        y : Union[List[pint.Quantity],pint.Quantity]
+            Absolute y coordinates for all the vertices along the polygon.
         """
-        if not (isinstance(x,pint.Quantity) and isinstance(y,pint.Quantity)):
-            raise TypeError
-        self._x = x
-        self._y = y
+        if not (isinstance(x,(list,pint.Quantity)) and isinstance(y,(list,pint.Quantity))):
+            raise TypeError("x and y coordinates must be pint.Quantity objects")
+        if isinstance(x,list):
+            for coord in x:
+                if not isinstance(coord,pint.Quantity):
+                    raise TypeError("x and y coordinates must be pint.Quantity objects")
+        if isinstance(y,list):
+            for coord in y:
+                if not isinstance(coord,pint.Quantity):
+                    raise TypeError("x and y coordinates must be pint.Quantity objects")
+
+        self._x = Q_.from_list(x)
+        self._y = Q_.from_list(y)
         super(Polyline,self).__init__(**kwargs)
         self._tag = 'polyline'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], 
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
         """Set SVG attributes for the polyline element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'points' attribute.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
         """
-        element.set('points', ''.join(['{},{} '.format((xi*dpi).magnitude,(yi*dpi).magnitude) for xi,yi in zip(self._x,self._y)]))
-        super(Polyline, self).set_element_attributes(element, dpi=dpi)
+        element.set('points', ''.join(['{},{} '.format((xi*device_per_length).magnitude,(yi*device_per_length).magnitude) for xi,yi in zip(self._x,self._y)]))
+        super(Polyline, self).set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -400,36 +429,49 @@ class Polygon(Stroke,Fill,Transform,Clip,Styling,PartBase):
     """Polygon shape (closed polyline)
     """
 
-    def __init__(self, x: pint.Quantity, y: pint.Quantity, **kwargs):
+    def __init__(self, x: Union[List[pint.Quantity],pint.Quantity], y: Union[List[pint.Quantity],pint.Quantity], **kwargs):
         """Initialise
 
         Parameters
         ----------
-        x : pint.Quantity
+        x : Union[List[pint.Quantity],pint.Quantity]
             Absolute x coordinates for all the vertices along the polygon.
-        y : pint.Quantity
+        y : Union[List[pint.Quantity],pint.Quantity]
             Absolute y coordinates for all the vertices along the polygon.
         """
-        if not (isinstance(x,pint.Quantity) and isinstance(y,pint.Quantity)):
-            raise TypeError
-        self._x = np.array(x)
-        self._y = np.array(y)
+        if not (isinstance(x,(list,pint.Quantity)) and isinstance(y,(list,pint.Quantity))):
+            raise TypeError("x and y coordinates must be pint.Quantity objects")
+        if isinstance(x,list):
+            for coord in x:
+                if not isinstance(coord,pint.Quantity):
+                    raise TypeError("x and y coordinates must be pint.Quantity objects")
+        if isinstance(y,list):
+            for coord in y:
+                if not isinstance(coord,pint.Quantity):
+                    raise TypeError("x and y coordinates must be pint.Quantity objects")
+
+        self._x = Q_.from_list(x)
+        self._y = Q_.from_list(y)
         super(Polygon,self).__init__(**kwargs)
         self._tag = 'polygon'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], 
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
         """Set SVG attributes for the ellipse element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the 'points' attribute.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
         """
-        element.set('points', ''.join(['{},{} '.format((xi*dpi).magnitude,(yi*dpi).magnitude) for xi,yi in zip(self._x,self._y)]))
-        super(Polygon, self).set_element_attributes(element, dpi=dpi)
+        element.set('points', ''.join(['{},{} '.format((xi*device_per_length).magnitude,(yi*device_per_length).magnitude) for xi,yi in zip(self._x,self._y)]))
+        super(Polygon, self).set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
 
     def __repr__(self) -> str:
         """Generate readable summary
@@ -469,12 +511,12 @@ class EquilateralTriangle(Polygon):
         """
         if not (isinstance(x0,pint.Quantity) and isinstance(y0,pint.Quantity)
                 and isinstance(side,pint.Quantity)):
-            raise TypeError
+            raise TypeError("x0, y0 and side must all be pint.Quantity objects")
         self._x0 = x0
         self._y0 = y0
         self._side = side
         hh = 0.5*np.cos(np.radians(30))
-        yorigin = 0.5/np.cos(np.radians(30))
+        yorigin = 0.5*x0.units/np.cos(np.radians(30))
         super(EquilateralTriangle, self).__init__(
                     [x0 + xp*side for xp in [0, 0.5, -0.5, 0]],
                     [-yorigin + y0 + yp*side for yp in [-hh, hh, hh, -hh]], **kwargs)

@@ -1,21 +1,56 @@
 import xml.etree.ElementTree as ET
 from typing import Union, Iterable
 
+import pint
+
 from .attributes import Styling, Stroke, Fill, Transform, Clip
 from .part import PartBase
+from .units import _tostr, ureg
+
+
+def _scale(v: pint.Quantity, device_per_length: pint.Quantity, device_per_pixel: pint.Quantity) -> pint.Quantity:
+    """Scale a quantity into device coordinates.
+
+    Parameters
+    ----------
+    v : pint.Quantity
+        Quantity to scale.
+    device_per_length : pint.Quantity
+        Scaling for physical lengths into device coordinates.
+    device_per_pixel : pint.Quantity
+        Scaling for pixels into device coordinates.
+
+    Returns
+    -------
+    pint.Quantity
+        Value in device coordinates.
+
+    Raises
+    ------
+    ValueError
+        If the units cannot be scaled.
+    """
+    
+    if v.check("[length]"):
+        return v*device_per_length
+    elif v.check("[pixel]"):
+        return v*device_per_pixel
+    else:
+        raise ValueError
+
 
 
 class MoveTo:
     """Moves the position in absolute coordinates
     """
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: pint.Quantity, y: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        x : float
+        x : pint.Quantity
             The new absolute x position.
-        y : float
+        y : pint.Quantity
             The new absolute y position.
         """
         self._x = x
@@ -29,31 +64,36 @@ class MoveTo:
         str
             String representation of drawing command.
         """
-        return 'Move({},{})'.format(self._x,self._y)
+        return 'Move({},{})'.format(_tostr(self._x),_tostr(self._y))
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'M {} {}'.format(self._x,self._y)
+        x = _scale(self._x, device_per_length, device_per_pixel)
+        y = _scale(self._x, device_per_length, device_per_pixel)
+        return 'M {} {}'.format(x.magnitude,y.magnitude)
 
 
 
 class MoveToDelta:
     """Moves the position in relative coordinates
     """
-    def __init__(self, dx: float, dy: float):
+    def __init__(self, dx: pint.Quantity, dy: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        dx : float
+        dx : pint.Quantity
             The relative x shift.
-        dy : float
+        dy : pint.Quantity
             The relative y shift.
         """
         self._dx = dx
@@ -69,29 +109,34 @@ class MoveToDelta:
         """
         return 'MoveDelta({},{})'.format(self._dx,self._dy)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'm {} {}'.format(self._dx,self._dy)
+        dx = _scale(self._dx, device_per_length, device_per_pixel)
+        dy = _scale(self._dx, device_per_length, device_per_pixel)
+        return 'm {} {}'.format(dx.magnitude,dy.magnitude)
 
 
 
 class LineTo:
     """Draws a line from the current position to an absolute position
     """
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: pint.Quantity, y: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        x : float
+        x : pint.Quantity
             The absolute x position of the end of the line.
-        y : float
+        y : pint.Quantity
             The absolute y position of the end of the line.
         """
         self._x = x
@@ -107,29 +152,34 @@ class LineTo:
         """
         return 'LineTo({},{})'.format(self._x,self._y)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'L {} {}'.format(self._x,self._y)
+        x = _scale(self._x, device_per_length, device_per_pixel)
+        y = _scale(self._x, device_per_length, device_per_pixel)
+        return 'L {} {}'.format(x.magnitude,y.magnitude)
 
 
 
 class LineToDelta:
     """Draws a line from the current position to an relative position
     """
-    def __init__(self, dx: float, dy: float):
+    def __init__(self, dx: pint.Quantity, dy: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        dx : float
+        dx : pint.Quantity
             The relative x position of the end of the line.
-        dy : float
+        dy : pint.Quantity
             The relative y position of the end of the line.
         """
         self._dx = dx
@@ -145,33 +195,38 @@ class LineToDelta:
         """
         return 'LineToDelta({},{})'.format(self._dx,self._dy)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'l {} {}'.format(self._dx,self._dy)
+        dx = _scale(self._dx, device_per_length, device_per_pixel)
+        dy = _scale(self._dx, device_per_length, device_per_pixel)
+        return 'l {} {}'.format(dx.magnitude,dy.magnitude)
 
 
 
 class PathLine:
     """Draws a line from one position to another
     """
-    def __init__(self, x0: float, y0: float, x1: float, y1: float):
+    def __init__(self, x0: pint.Quantity, y0: pint.Quantity, x1: pint.Quantity, y1: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        x0 : float
+        x0 : pint.Quantity
             The absolute x position of the start of the line.
-        y0 : float
+        y0 : pint.Quantity
             The absolute y position of the start of the line.
-        x1 : float
+        x1 : pint.Quantity
             The absolute x position of the end of the line.
-        y1 : float
+        y1 : pint.Quantity
             The absolute y position of the end of the line.
         """
         self._x0 = x0
@@ -199,17 +254,34 @@ class PathLine:
         """
         return 'M {} {} L {} {}'.format(self._x0,self._y0,self._x1,self._y1)
 
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
+
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
+        """
+        x0 = _scale(self._x0, device_per_length, device_per_pixel)
+        y0 = _scale(self._y0, device_per_length, device_per_pixel)
+        x1 = _scale(self._x1, device_per_length, device_per_pixel)
+        y1 = _scale(self._y1, device_per_length, device_per_pixel)
+        return 'M {} {} L {} {}'.format(x0,y0,x1,y1)
+
 
 
 class HlineTo:
     """Draws a horizontal line from the current position to an absolute position
     """
-    def __init__(self, x: float):
+    def __init__(self, x: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        x : float
+        x : pint.Quantity
             The absolute x position of the end of the line.
         """
         self._x = x
@@ -224,27 +296,31 @@ class HlineTo:
         """
         return 'HorizontalLineTo({})'.format(self._x)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'H {}'.format(self._x)
+        x = _scale(self._x, device_per_length, device_per_pixel)
+        return 'H {}'.format(x.magnitude)
 
 
 
 class HlineToDelta:
     """Draws a horizontal line from the current position to a relative position
     """
-    def __init__(self, dx: float):
+    def __init__(self, dx: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        dx : float
+        dx : pint.Quantity
             The relative x position of the end of the line.
         """
         self._dx = dx
@@ -259,30 +335,35 @@ class HlineToDelta:
         """
         return 'HorizontalLineToDelta({})'.format(self._dx)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'h {}'.format(self._dx)
+        dx = _scale(self._dx, device_per_length, device_per_pixel)
+        return 'h {} {}'.format(dx.magnitude)
+
 
 
 class Hline:
     """Draws a horizontal line from one absolute position to another absolute position
     """
-    def __init__(self, x0: float, y: float, x1: float):
+    def __init__(self, x0: pint.Quantity, y: pint.Quantity, x1: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        x0 : float
+        x0 : pint.Quantity
             The absolute x position of the start of the line.
-        y : float
+        y : pint.Quantity
             The absolute y position of the line.
-        x1 : float
+        x1 : pint.Quantity
             The absolute x position of the end of the line.
         """
         self._x0 = x0
@@ -299,27 +380,32 @@ class Hline:
         """
         return 'HorizontalLine({},{} to {},{})'.format(self._x0,self._y,self._x1,self._y)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'M {} {} H {}'.format(self._x0,self._y, self._x1)
-
+        x0 = _scale(self._x0, device_per_length, device_per_pixel)
+        y = _scale(self._y, device_per_length, device_per_pixel)
+        x1 = _scale(self._x1, device_per_length, device_per_pixel)
+        return 'M {} {} H {}'.format(x0.magnitude, y.magnitude, x1.magnitude)
 
 
 class VlineTo:
     """Draws a vertical line from the current position to an absolute position
     """
-    def __init__(self, y: float):
+    def __init__(self, y: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        y : float
+        y : pint.Quantity
             The absolute y position of the end of the line.
         """
         self._y = y
@@ -334,27 +420,31 @@ class VlineTo:
         """
         return 'VerticalLineTo({})'.format(self._y)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'V {}'.format(self._y)
+        y = _scale(self._y, device_per_length, device_per_pixel)
+        return 'V {}'.format(y.magnitude)
 
 
 
 class VlineToDelta:
     """Draws a vertical line from the current position to a relative position
     """
-    def __init__(self, dy: float):
+    def __init__(self, dy: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        dy : float
+        dy : pint.Quantity
             The relative y position of the end of the line.
         """
         self._dy = dy
@@ -369,30 +459,34 @@ class VlineToDelta:
         """
         return 'VerticalLineToDelta({})'.format(self._dy)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'v {}'.format(self._dy)
+        dy = _scale(self._dy, device_per_length, device_per_pixel)
+        return 'v {}'.format(dy.magnitude)
 
 
 class Vline:
     """Draws a vertical line from one absolute position to another absolute position
     """
-    def __init__(self, x: float, y0: float, y1: float):
+    def __init__(self, x: pint.Quantity, y0: pint.Quantity, y1: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        x : float
+        x : pint.Quantity
             The absolute x position of the line.
-        y0 : float
+        y0 : pint.Quantity
             The absolute y position of the start of the line.
-        y1 : float
+        y1 : pint.Quantity
             The absolute y position of the end of the line.
         """
         self._x = x
@@ -409,15 +503,21 @@ class Vline:
         """
         return 'VerticalLine({},{} to {},{})'.format(self._x,self._y0,self._x,self._y1)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'M {} {} V {}'.format(self._x,self._y0, self._y1)
+        x = _scale(self._x, device_per_length, device_per_pixel)
+        y0 = _scale(self._y0, device_per_length, device_per_pixel)
+        y1 = _scale(self._y1, device_per_length, device_per_pixel)
+        return 'M {} {} V {}'.format(x.magnitude, y0.magnitude, y1.magnitude)
 
 
 
@@ -425,22 +525,22 @@ class CubicBezierTo:
     """Draw a cubic Bezier from the current position to a set of absolute coordinates.
     """
 
-    def __init__(self, xc1: float, yc1: float, xc2: float, yc2: float, x: float, y: float):
+    def __init__(self, xc1: pint.Quantity, yc1: pint.Quantity, xc2: pint.Quantity, yc2: pint.Quantity, x: pint.Quantity, y: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        xc1 : float
+        xc1 : pint.Quantity
             Absolute x coordinate for the first control point.
-        yc1 : float
+        yc1 : pint.Quantity
             Absolute y coordinate for the first control point.
-        xc2 : float
+        xc2 : pint.Quantity
             Absolute x coordinate for the second control point.
-        yc2 : float
+        yc2 : pint.Quantity
             Absolute y coordinate for the second control point.
-        x : float
+        x : pint.Quantity
             Absolute X coordinate for the end of the Bezier.
-        y : float
+        y : pint.Quantity
             Absolute Y coordinate for the end of the Bezier.
         """
         self._xc1 = xc1
@@ -460,15 +560,24 @@ class CubicBezierTo:
         """
         return 'CubicBezier(c1: {},{}, c2: {},{} to {},{})'.format(self._xc1,self._yc1,self._xc2,self._yc2,self._x,self._y)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'C {} {}, {} {}, {} {}'.format(self._xc1,self._yc1,self._xc2,self._yc2,self._x,self._y)
+        xc1 = _scale(self._xc1, device_per_length, device_per_pixel)
+        yc1 = _scale(self._yc1, device_per_length, device_per_pixel)
+        xc2 = _scale(self._xc2, device_per_length, device_per_pixel)
+        yc2 = _scale(self._yc2, device_per_length, device_per_pixel)
+        x = _scale(self._x, device_per_length, device_per_pixel)
+        y = _scale(self._y, device_per_length, device_per_pixel)
+        return 'C {} {}, {} {}, {} {}'.format(xc1.magnitude,yc1.magnitude,xc2.magnitude,yc2.magnitude,x.magnitude,y.magnitude)
 
 
 
@@ -476,22 +585,22 @@ class CubicBezierToDelta:
     """Draw a cubic Bezier from the current position to a set of relative coordinates.
     """
 
-    def __init__(self, dxc1: float, dyc1: float, dxc2: float, dyc2: float, dx: float, dy: float):
+    def __init__(self, dxc1: pint.Quantity, dyc1: pint.Quantity, dxc2: pint.Quantity, dyc2: pint.Quantity, dx: pint.Quantity, dy: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        dxc1 : float
+        dxc1 : pint.Quantity
             Relative x coordinate for the first control point.
-        dyc1 : float
+        dyc1 : pint.Quantity
             Relative y coordinate for the first control point.
-        dxc2 : float
+        dxc2 : pint.Quantity
             Relative x coordinate for the second control point.
-        dyc2 : float
+        dyc2 : pint.Quantity
             Relative y coordinate for the second control point.
-        dx : float
+        dx : pint.Quantity
             Relative x coordinate for the end of the Bezier.
-        dy : float
+        dy : pint.Quantity
             Relative y coordinate for the end of the Bezier.
         """
         self._dxc1 = dxc1
@@ -511,15 +620,24 @@ class CubicBezierToDelta:
         """
         return 'CubicBezierDelta(c1: {},{}, c2: {},{} to {},{})'.format(self._dxc1,self._dyc1,self._dxc2,self._dyc2,self._dx,self._dy)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'c {} {}, {} {}, {} {}'.format(self._dxc1,self._dyc1,self._dxc2,self._dyc2,self._dx,self._dy)
+        dxc1 = _scale(self._dxc1, device_per_length, device_per_pixel)
+        dyc1 = _scale(self._dyc1, device_per_length, device_per_pixel)
+        dxc2 = _scale(self._dxc2, device_per_length, device_per_pixel)
+        dyc2 = _scale(self._dyc2, device_per_length, device_per_pixel)
+        dx = _scale(self._dx, device_per_length, device_per_pixel)
+        dy = _scale(self._dy, device_per_length, device_per_pixel)
+        return 'c {} {}, {} {}, {} {}'.format(dxc1.magnitude,dyc1.magnitude,dxc2.magnitude,dyc2.magnitude,dx.magnitude,dy.magnitude)
 
 
 
@@ -527,18 +645,18 @@ class QuadraticBezierTo:
     """Draw a quadratic Bezier from the current position to a set of absolute coordinates.
     """
 
-    def __init__(self, xc: float, yc: float, x: float, y: float):
+    def __init__(self, xc: pint.Quantity, yc: pint.Quantity, x: pint.Quantity, y: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        xc : float
+        xc : pint.Quantity
             Absolute x coordinate for the control point.
-        yc : float
+        yc : pint.Quantity
             Absolute y coordinate for the control point.
-        x : float
+        x : pint.Quantity
             Absolute X coordinate for the end of the Bezier.
-        y : float
+        y : pint.Quantity
             Absolute Y coordinate for the end of the Bezier.
         """
         self._xc = xc
@@ -556,15 +674,22 @@ class QuadraticBezierTo:
         """
         return 'QuadraticBezier(c: {},{} to {},{})'.format(self._xc,self._yc,self._x,self._y)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'Q {} {}, {} {}'.format(self._xc,self._yc,self._x,self._y)
+        xc = _scale(self._xc, device_per_length, device_per_pixel)
+        yc = _scale(self._yc, device_per_length, device_per_pixel)
+        x = _scale(self._x, device_per_length, device_per_pixel)
+        y = _scale(self._y, device_per_length, device_per_pixel)
+        return 'Q {} {}, {} {}'.format(xc.magnitude,yc.magnitude,x.magnitude,y.magnitude)
 
 
 
@@ -572,18 +697,18 @@ class QuadraticBezierToDelta:
     """Draw a quadratic Bezier from the current position to a set of relative coordinates.
     """
 
-    def __init__(self, dxc: float, dyc: float, dx: float, dy: float):
+    def __init__(self, dxc: pint.Quantity, dyc: pint.Quantity, dx: pint.Quantity, dy: pint.Quantity):
         """Initialise
 
         Parameters
         ----------
-        dxc : float
+        dxc : pint.Quantity
             Relative x coordinate for the control point.
-        dyc : float
+        dyc : pint.Quantity
             Relative y coordinate for the control point.
-        dx : float
+        dx : pint.Quantity
             Relative x coordinate for the end of the Bezier.
-        dy : float
+        dy : pint.Quantity
             Relative y coordinate for the end of the Bezier.
         """
         self._dxc = dxc
@@ -601,15 +726,23 @@ class QuadraticBezierToDelta:
         """
         return 'QuadraticBezierDelta(c: {},{} to {},{})'.format(self._dxc,self._dyc,self._dx,self._dy)
 
-    def __str__(self) -> str:
-        """Return the SVG path drawing command
 
-        Returns
-        -------
-        str
-            String representation of drawing command.
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert command into an SVG string
+
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        return 'q {} {}, {} {}'.format(self._dxc,self._dyc,self._dx,self._dy)
+        dxc = _scale(self._dxc, device_per_length, device_per_pixel)
+        dyc = _scale(self._dyc, device_per_length, device_per_pixel)
+        dx = _scale(self._dx, device_per_length, device_per_pixel)
+        dy = _scale(self._dy, device_per_length, device_per_pixel)
+        return 'q {} {}, {} {}'.format(dxc.magnitude,dyc.magnitude,dx.magnitude,dy.magnitude)
 
 
 _COMMAND_CLASSES = (MoveTo,MoveToDelta,LineTo,LineToDelta,PathLine,
@@ -726,17 +859,22 @@ class RawPath(list):
         """
         self._closed = True
 
-    def __str__(self) -> str:
-        """Generate a string representation of the path for SVG.
+    def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                    device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
+        """Convert path into an SVG string
 
-        Returns
-        -------
-        str
-            Set of SVG Path commands.
+        Parameters
+        ----------
+        device_per_length : pint.Quantity, optional
+            Device units per unit length, by default 72*ureg.device/ureg.inch
+        device_per_pixel : pint.Quantity, optional
+            Device units per pixel, by default 1*ureg.device/ureg.px
         """
-        tmp = ' '.join(str(c) for c in self.__iter__())
+        tmp = ' '.join(c.to_svg(device_per_length,device_per_pixel) for c in self.__iter__())
+
         if self._closed:
             tmp += ' Z'
+
         return tmp
 
 
@@ -752,11 +890,16 @@ class Path(Stroke,Fill,Transform,Clip,Styling,PartBase):
         path : RawPath
             The path that will be made into the path part.
         """
+        if not isinstance(path, RawPath):
+            raise TypeError("path should be a RawPath object")
         self._path = path
+
         super(Path,self).__init__(**kwargs)
         self._tag = 'path'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], 
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
         """Set the attributes in the XML tree element
 
         Sets the "d" attribute.
@@ -765,7 +908,12 @@ class Path(Stroke,Fill,Transform,Clip,Styling,PartBase):
         ----------
         element : Union[ET.Element,ET.SubElement]
             The XML tree element that this method adds the attributes to.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
         """
-        element.set('d', str(self._path))
-        super(Path, self).set_element_attributes(element)
+        element.set('d', self._path.to_svg(device_per_length, device_per_pixel))
+        super(Path, self).set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
 

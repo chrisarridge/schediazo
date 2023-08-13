@@ -8,6 +8,8 @@ import base64
 
 import pint
 
+from .units import ureg
+
 def generate_id() -> str:
     """Generate a random ID string for an element.
 
@@ -46,16 +48,20 @@ class PartBase:
     def __repr__(self) -> str:
         return 'PartBase({})'.format(self._id)
 
-    def create_element(self, root: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None) -> ET.SubElement:
+    def create_element(self, root: Union[ET.Element,ET.SubElement], 
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px) -> ET.SubElement:
         """Create the XML element
 
         Parameters
         ----------
         root : Union[ET.Element,ET.SubElement]
             XML Element to create this new element under.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
 
         Returns
         -------
@@ -63,19 +69,23 @@ class PartBase:
             Created XML element.
         """
         element = ET.SubElement(root, self._tag)
-        self.set_element_attributes(element, dpi=dpi)
+        self.set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
         return element
 
-    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element], dpi: pint.Quantity=None):
+    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element], 
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
         """Set the SVG element attributes.
 
         Parameters
         ----------
         element : Union[ET.SubElement,ET.Element]
             Element to set the attributes in.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
 
         """
         element.set('id', self._id)
@@ -144,16 +154,20 @@ class PartDict(dict):
         """
         self[part.id] = part
 
-    def create_element(self, root: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None) -> ET.SubElement:
+    def create_element(self, root: Union[ET.Element,ET.SubElement],
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px) -> ET.SubElement:
         """Create the XML element and all the child elements.
 
         Parameters
         ----------
         root : Union[ET.Element,ET.SubElement]
             XML Element to create this new element under.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
 
         Returns
         -------
@@ -161,21 +175,25 @@ class PartDict(dict):
             Created XML element.
         """
         element = ET.SubElement(root, self._tag)
-        self.set_element_attributes(element, dpi=dpi)
+        self.set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
         for child in self:
-            self[child].create_element(element, dpi=dpi)
+            self[child].create_element(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
         return element
 
-    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element], dpi: pint.Quantity=None):
+    def set_element_attributes(self, element: Union[ET.SubElement,ET.Element],
+                               device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
+                               device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
         """Set the SVG element attributes.
 
         Parameters
         ----------
         element : Union[ET.SubElement,ET.Element]
             Element to set the attributes in.
-        dpi : pint.Quantity, default None
-            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
-            where there the units are in pixels. (user coordinates).  The default is 1:1.
+        device_per_length : pint.Quantity, default 72 device units per inch
+            A value to scale any coordinates in metres into device units (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).
+        device_per_pixel : pint.Quantity, default 1 device units per pixel
+            A value to scale any coordinates in pixels into device units.
 
         """
         element.set('id', self._id)

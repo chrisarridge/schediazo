@@ -17,9 +17,10 @@ ureg.define("hecto- = 1e2   = h-")
 ureg.define("kilo- =  1e3   = k-")
 
 # Basic lengths.
-ureg.define("px = [display_length]")
+ureg.define("px = [pixel]")
 ureg.define("meter = [length] = m = metre")
-ureg.define("percent = [] = %")
+ureg.define("percent = [percentage] = %")
+ureg.define("device = [device]")
 
 # Imperial lengths.
 ureg.define("inch = 25.4 * mm = in")
@@ -44,6 +45,8 @@ pc = ureg.pc
 rad = ureg.rad
 deg = ureg.deg
 px = ureg.px
+percent = ureg.percent
+
 
 def _tostr(q: pint.Quantity) -> str:
     """Convert a length-type or % quantity to a string suitable for SVG.
@@ -51,7 +54,7 @@ def _tostr(q: pint.Quantity) -> str:
     Parameters
     ----------
     q : pint.Quantity
-        Quantity that should have dimensions of [length], [display_length] or be a percentage.
+        Quantity that should have dimensions of [length], [pixel] or be a percentage.
 
     Returns
     -------
@@ -64,11 +67,11 @@ def _tostr(q: pint.Quantity) -> str:
         If the quantity doesn't have the right units/dimensions, e.g., a time.
     """
     if q.check("[length]"):
-        return ("{:f~P}".format(q.to(ureg.mm))).replace(" ","")
-    if q.check("[display_length]"):
-        return ("{:f~P}".format(q.to(ureg.px))).replace(" ","")
+        return ("{:f~P}".format(q)).replace(" ","")
+    if q.check("[pixel]"):
+        return ("{:f~P}".format(q)).replace(" ","")
     elif q.check(ureg.percent):
-        return ("{:f~P}".format(q.to(ureg.percent))).replace(" ","")
+        return ("{:f~P}".format(q)).replace(" ","")
     else:
         raise ValueError("Cannot convert these units <{}> to a string for SVG".format(q.units))
 

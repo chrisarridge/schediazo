@@ -12,13 +12,13 @@ from ._version import __version__, __version_tuple__
 
 from .paper import PaperSize
 from .drawing import Drawing
-from .svg import Versions
 from .units import ureg, Q_, cm, mm, inch, pt, pc, px, rad, deg
+from .attributes import FontStyle, FontVariant, FontStretch, FontWeight, FontSize, TextAnchor
 
-#from .shapes import Line, Circle, Ellipse, Rect, Polyline, Polygon, EquilateralTriangle
-#from .text import Text, TextPath
-#from .image import Image
-#from .containers import Group, ClipPath
-#from .paths import Path, RawPath, MoveTo,MoveToDelta,LineTo,LineToDelta,PathLine,HlineTo,HlineToDelta,Hline,VlineTo,VlineToDelta,Vline,CubicBezierTo,CubicBezierToDelta,QuadraticBezierTo,QuadraticBezierToDelta
+from .containers import Group, ClipPath
+from .shapes import Line, Circle, Ellipse, Rect, Polyline, Polygon, EquilateralTriangle
+from .text import Text, TextPath
+from .image import Image
+from .paths import Path, RawPath, MoveTo,MoveToDelta,LineTo,LineToDelta,PathLine,HlineTo,HlineToDelta,Hline,VlineTo,VlineToDelta,Vline,CubicBezierTo,CubicBezierToDelta,QuadraticBezierTo,QuadraticBezierToDelta
+
 #from .transforms import Affine, identity
-#from .attributes import FontStyle, FontVariant, FontStretch, FontWeight, FontSize, TextAnchor

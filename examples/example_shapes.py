@@ -2,12 +2,19 @@ import schediazo as sc
 
 d = sc.Drawing()
 
-d.add(sc.Rect(0,0,50,50, stroke='black', stroke_width=1, fill='red', id='rectangle'))
-d.add(sc.Circle(100, 25, 25, stroke='black', stroke_width=1, fill='yellow', id='circle'))
-d.add(sc.Ellipse(175, 25, 50, 25, stroke='black', stroke_width=1, fill='green', id='ellipse'))
-d.add(sc.Rect(0,100,50,50, rx=10, ry=10, stroke='black', stroke_width=1, fill='orange', id='rounded-rectangle'))
-d.add(sc.EquilateralTriangle(100, 100, 50, stroke='black', stroke_width=1, fill='red'))
-d.add(sc.Polyline([200,250,300,250,200],[100,100,125,150,150], stroke='black', fill='orange'))
-d.add(sc.Polygon([200,250,300,250,200],[200,200,225,250,250], stroke='black', fill='yellow'))
+col1 = 50*sc.mm
+col2 = 150*sc.mm
+row1 = 50*sc.mm
+row2 = 150*sc.mm
+row3 = 250*sc.mm
+row4 = 350*sc.mm
+
+d.add(sc.Rect(col1-25*sc.mm, row1-25*sc.mm, 50*sc.mm, 50*sc.mm, stroke="black", stroke_width=1*sc.pt, fill="red", id="rectangle"))
+d.add(sc.Rect(col2-25*sc.mm, row1-25*sc.mm, 50*sc.mm, 50*sc.mm, rx=5*sc.mm, ry=5*sc.mm, stroke="black", stroke_width=1*sc.pt, fill="orange", id="rounded-rectangle"))
+d.add(sc.Circle(col1, row2, 25*sc.mm, stroke="black", stroke_width=1*sc.pt, fill="yellow", id="circle"))
+d.add(sc.Ellipse(col2, row2, 25*sc.mm, 12.5*sc.mm, stroke="black", stroke_width=2*sc.pt, fill="green", id="ellipse"))
+d.add(sc.Polygon([col1-50*sc.mm,col1,col1+50*sc.mm,col1,col1-50*sc.mm],[row3-25*sc.mm,row3-25*sc.mm,row3,row3+25*sc.mm,row3+25*sc.mm], stroke='black', fill='yellow'))
+d.add(sc.Polyline([col2-50*sc.mm,col2,col2+50*sc.mm,col1,col2-50*sc.mm],[row3-25*sc.mm,row3-25*sc.mm,row3,row3+25*sc.mm,row3+25*sc.mm], stroke='black', fill='orange'))
+d.add(sc.EquilateralTriangle(col1, row4, 50*sc.mm, stroke="black", stroke_width=1*sc.pt, fill="red"))
 
 d.save('example_shapes')
