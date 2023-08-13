@@ -47,7 +47,7 @@ class MoveTo:
             Device units per pixel, by default 1*ureg.device/ureg.px
         """
         x = _scale(self._x, device_per_length, device_per_pixel)
-        y = _scale(self._x, device_per_length, device_per_pixel)
+        y = _scale(self._y, device_per_length, device_per_pixel)
         return 'M {} {}'.format(x.magnitude,y.magnitude)
 
 
@@ -90,7 +90,7 @@ class MoveToDelta:
             Device units per pixel, by default 1*ureg.device/ureg.px
         """
         dx = _scale(self._dx, device_per_length, device_per_pixel)
-        dy = _scale(self._dx, device_per_length, device_per_pixel)
+        dy = _scale(self._dy, device_per_length, device_per_pixel)
         return 'm {} {}'.format(dx.magnitude,dy.magnitude)
 
 
@@ -133,7 +133,7 @@ class LineTo:
             Device units per pixel, by default 1*ureg.device/ureg.px
         """
         x = _scale(self._x, device_per_length, device_per_pixel)
-        y = _scale(self._x, device_per_length, device_per_pixel)
+        y = _scale(self._y, device_per_length, device_per_pixel)
         return 'L {} {}'.format(x.magnitude,y.magnitude)
 
 
@@ -176,7 +176,7 @@ class LineToDelta:
             Device units per pixel, by default 1*ureg.device/ureg.px
         """
         dx = _scale(self._dx, device_per_length, device_per_pixel)
-        dy = _scale(self._dx, device_per_length, device_per_pixel)
+        dy = _scale(self._dy, device_per_length, device_per_pixel)
         return 'l {} {}'.format(dx.magnitude,dy.magnitude)
 
 
@@ -212,16 +212,6 @@ class PathLine:
             String representation of drawing command.
         """
         return 'PathLine({},{} to {},{})'.format(self._x0,self._y0,self._x1,self._y1)
-
-    def __str__(self) -> str:
-        """Return the SVG path drawing commands
-
-        Returns
-        -------
-        str
-            String representation of drawing command.
-        """
-        return 'M {} {} L {} {}'.format(self._x0,self._y0,self._x1,self._y1)
 
     def to_svg(self, device_per_length: pint.Quantity=72*ureg.device/ureg.inch,
                     device_per_pixel: pint.Quantity=1*ureg.device/ureg.px):
@@ -316,7 +306,7 @@ class HlineToDelta:
             Device units per pixel, by default 1*ureg.device/ureg.px
         """
         dx = _scale(self._dx, device_per_length, device_per_pixel)
-        return 'h {} {}'.format(dx.magnitude)
+        return 'h {} '.format(dx.magnitude)
 
 
 
