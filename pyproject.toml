@@ -28,7 +28,8 @@ dynamic= ["version"]
 dependencies = [
         'numpy',
         'pillow',
-        'tinycss2']
+        'tinycss2',
+        'pint']
 
 [project.urls]
 "Homepage" = "https://github.com/chrisarridge/schediazo"
