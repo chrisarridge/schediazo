@@ -1,6 +1,6 @@
 import schediazo as sc
 
-d = sc.Drawing()
+d = sc.Drawing(width=200*sc.mm, height=450*sc.mm)
 
 col1 = 50*sc.mm
 col2 = 150*sc.mm
