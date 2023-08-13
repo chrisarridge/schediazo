@@ -7,10 +7,10 @@ import schediazo as sc
 
 d = sc.Drawing()
 
-d.add(sc.Text("My", x=20, y=35, font_family="sans-serif", font_size="13px", font_style=sc.FontStyle.Italic))
-d.add(sc.Text("cat", x=40, y=35, font_family="sans-serif", font_size="30px", font_weight=sc.FontWeight.Bold))
-d.add(sc.Text("is", x=55, y=55, font_family="sans-serif", font_size="13px", font_style=sc.FontStyle.Italic))
-d.add(sc.Text("Grumpy!", x=65, y=55, font_family="serif", font_size="40px", font_style=sc.FontStyle.Italic, fill="red"))
+d.add(sc.Text("My", x=20*sc.mm, y=35*sc.mm, font_family="sans-serif", font_size="13px", font_style=sc.FontStyle.Italic))
+d.add(sc.Text("cat", x=40*sc.mm, y=35*sc.mm, font_family="sans-serif", font_size="30px", font_weight=sc.FontWeight.Bold))
+d.add(sc.Text("is", x=55*sc.mm, y=55*sc.mm, font_family="sans-serif", font_size="13px", font_style=sc.FontStyle.Italic))
+d.add(sc.Text("Grumpy!", x=65*sc.mm, y=55*sc.mm, font_family="serif", font_size="40px", font_style=sc.FontStyle.Italic, fill="red"))
 
 d.save('example_text1')
 
