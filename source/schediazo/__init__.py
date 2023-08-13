@@ -10,14 +10,15 @@ __status__ = "development"
 __docformat__ = "reStructuredText"
 from ._version import __version__, __version_tuple__
 
+from .paper import PaperSize
 from .drawing import Drawing
-from .shapes import Line, Circle, Ellipse, Rect, Polyline, Polygon, EquilateralTriangle
-from .text import Text, TextPath
-from .image import Image
-from .containers import Group, ClipPath
-from .paths import Path, RawPath, MoveTo,MoveToDelta,LineTo,LineToDelta,PathLine,HlineTo,HlineToDelta,Hline,VlineTo,VlineToDelta,Vline,CubicBezierTo,CubicBezierToDelta,QuadraticBezierTo,QuadraticBezierToDelta
-from .units import ureg, Q_, cm, mm, m, inch, pt, pc
-from .transforms import Affine, identity
 from .svg import Versions
-from .attributes import FontStyle, FontVariant, FontStretch, FontWeight, FontSize, TextAnchor
+from .units import ureg, Q_, cm, mm, inch, pt, pc, px, rad, deg
 
+#from .shapes import Line, Circle, Ellipse, Rect, Polyline, Polygon, EquilateralTriangle
+#from .text import Text, TextPath
+#from .image import Image
+#from .containers import Group, ClipPath
+#from .paths import Path, RawPath, MoveTo,MoveToDelta,LineTo,LineToDelta,PathLine,HlineTo,HlineToDelta,Hline,VlineTo,VlineToDelta,Vline,CubicBezierTo,CubicBezierToDelta,QuadraticBezierTo,QuadraticBezierToDelta
+#from .transforms import Affine, identity
+#from .attributes import FontStyle, FontVariant, FontStretch, FontWeight, FontSize, TextAnchor

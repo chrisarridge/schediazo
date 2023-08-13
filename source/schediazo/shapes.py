@@ -7,7 +7,7 @@ import pint
 from .attributes import Styling, Stroke, Fill, Transform, Clip
 from .part import PartBase
 from .paths import *
-from .units import _toquantity, _toquantity_array, _tostr
+from .units import _tostr
 
 class Line(Stroke,Transform,Clip,Styling,PartBase):
     """Line
@@ -29,6 +29,9 @@ class Line(Stroke,Transform,Clip,Styling,PartBase):
         y2 : pint.Quantity
             End y coordinate for the line.
         """
+        if not (isinstance(x1,pint.Quantity) and isinstance(x2,pint.Quantity)
+                and isinstance(y1,pint.Quantity) and isinstance(y2,pint.Quantity)):
+            raise TypeError
         self._x1 = x1
         self._y1 = y1
         self._x2 = x2
@@ -90,6 +93,9 @@ class Circle(Stroke,Fill,Transform,Clip,Styling,PartBase):
         r : pint.Quantity
             Radius of the circle.
         """
+        if not (isinstance(cx,pint.Quantity) and isinstance(cy,pint.Quantity)
+                and isinstance(r,pint.Quantity)):
+            raise TypeError
         self._cx = cx
         self._cy = cy
         self._r = r
@@ -153,6 +159,9 @@ class Ellipse(Stroke,Fill,Transform,Clip,Styling,PartBase):
         ry : pint.Quantity
             Radius of the ellipse in the y axis.
         """
+        if not (isinstance(cx,pint.Quantity) and isinstance(cy,pint.Quantity)
+                and isinstance(rx,pint.Quantity) and isinstance(ry,pint.Quantity)):
+            raise TypeError
         self._cx = cx
         self._cy = cy
         self._rx = rx
@@ -222,6 +231,15 @@ class Rect(Stroke,Fill,Transform,Clip,Styling,PartBase):
         ry : pint.Quantity
             Vertical radius of the corner.
         """
+        if not (isinstance(x,pint.Quantity) and isinstance(y,pint.Quantity)
+                and isinstance(width,pint.Quantity) and isinstance(height,pint.Quantity)):
+            raise TypeError
+        if rx is not None:
+            if not isinstance(rx,pint.Quantity):
+                raise TypeError
+        if ry is not None:
+            if not isinstance(ry,pint.Quantity):
+                raise TypeError
         self._x = x
         self._y = y
         self._width = width
@@ -336,6 +354,8 @@ class Polyline(Stroke,Fill,Transform,Clip,Styling,PartBase):
         y : pint.Quantity
             Absolute y coordinates for all the vertices along the polyline.
         """
+        if not (isinstance(x,pint.Quantity) and isinstance(y,pint.Quantity)):
+            raise TypeError
         self._x = x
         self._y = y
         super(Polyline,self).__init__(**kwargs)
@@ -390,6 +410,8 @@ class Polygon(Stroke,Fill,Transform,Clip,Styling,PartBase):
         y : pint.Quantity
             Absolute y coordinates for all the vertices along the polygon.
         """
+        if not (isinstance(x,pint.Quantity) and isinstance(y,pint.Quantity)):
+            raise TypeError
         self._x = np.array(x)
         self._y = np.array(y)
         super(Polygon,self).__init__(**kwargs)
@@ -445,6 +467,9 @@ class EquilateralTriangle(Polygon):
         side : pint.Quantity
             Length of each side of the equilateral triangle.
         """
+        if not (isinstance(x0,pint.Quantity) and isinstance(y0,pint.Quantity)
+                and isinstance(side,pint.Quantity)):
+            raise TypeError
         self._x0 = x0
         self._y0 = y0
         self._side = side

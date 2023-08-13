@@ -34,13 +34,8 @@ class Group(Clip,PartDict):
 class ClipPath(PartDict):
     """Grouped set of drawing elements that are a path we can clip to
     """
-    def __init__(self, clip_path_units: str=None, **kwargs):
+    def __init__(self, **kwargs):
         """Initialise
-
-        Parameters
-        ----------
-        clip_path_units : str, optional
-            Units for the clip path.
         """
         self._clip_path_units = clip_path_units
         super(ClipPath,self).__init__(**kwargs)
@@ -58,8 +53,6 @@ class ClipPath(PartDict):
             where there the units are in pixels. (user coordinates).  The default is 1:1.
 
         """
-        if self._clip_path_units is not None:
-            element.set('clipPathUnits', self._clip_path_units)
         super(ClipPath, self).set_element_attributes(element, dpi=dpi)
 
 

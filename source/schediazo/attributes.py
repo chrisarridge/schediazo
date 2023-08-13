@@ -5,15 +5,17 @@ import xml.etree.ElementTree as ET
 import enum
 from typing import List, Union, Iterable
 
-from .transforms import Affine
+import pint
 
+from .transforms import Affine
+from .units import _tostr
 
 
 class AttributeBase:
     """Base mixin for element attributes
     """
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set the attributes in the XML tree element
 
         For this set of attributes take the data and set them as attributes
@@ -25,8 +27,11 @@ class AttributeBase:
         ----------
         element : Union[ET.Element,ET.SubElement]
             The XML tree element that this method adds the attributes to.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
-        super(AttributeBase, self).set_element_attributes(element)
+        super(AttributeBase, self).set_element_attributes(element, dpi=dpi)
 
 
 
@@ -43,11 +48,17 @@ class Styling(AttributeBase):
         cssclass : str, optional
             A CSS class name for this part.
         """
+        if style is not None:
+            if not isinstance(style,str):
+                raise TypeError("Style should be a string")
+        if cssclass is not None:
+            if not isinstance(cssclass,str):
+                raise TypeError("CSS Id should be a string")
         self._style = style
         self._cssclass = cssclass
         super(Styling, self).__init__(**kwargs)
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set the attributes in the XML tree element
 
         Sets the attributes style and class in a tag, for example,
@@ -58,12 +69,15 @@ class Styling(AttributeBase):
         ----------
         element : Union[ET.Element,ET.SubElement]
             The XML tree element that this method adds the attributes to.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
         if self._style is not None:
             element.set('style', self._style)
         if self._cssclass is not None:
             element.set('class', self._cssclass)
-        super(Styling, self).set_element_attributes(element)
+        super(Styling, self).set_element_attributes(element, dpi=dpi)
 
 
 class Transform(AttributeBase):
@@ -81,7 +95,7 @@ class Transform(AttributeBase):
         self._transform = transform
         super(Transform, self).__init__(**kwargs)
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set the attributes in the XML tree element
 
         Sets the transform attribute in the tag, for example,
@@ -92,10 +106,13 @@ class Transform(AttributeBase):
         ----------
         element : Union[ET.Element,ET.SubElement]
             The XML tree element that this method adds the attributes to.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
         if self._transform is not None:
             element.set('transform', str(self._transform))
-        super(Transform, self).set_element_attributes(element)
+        super(Transform, self).set_element_attributes(element, dpi=dpi)
 
 
 class LineCap(enum.Enum):
@@ -147,24 +164,24 @@ class Stroke(AttributeBase):
     """
 
     def __init__(self, stroke: str = None,
-                    stroke_dash_array: List[float] = None,
-                    stroke_dash_offset: float = None,
+                    stroke_dash_array: List[pint.Quantity] = None,
+                    stroke_dash_offset: pint.Quantity = None,
                     stroke_linecap: LineCap = None,
                     stroke_linejoin: LineJoin = None,
                     stroke_miterlimit: float = None,
                     stroke_opacity: float = None,
-                    stroke_width: float = None, **kwargs):
+                    stroke_width: pint.Quantity = None, **kwargs):
         """Initialise
 
         Parameters
         ----------
         stroke : str, optional
             Colour for this stroke.  Colour name or hex string.
-        stroke_dash_array : List[float], optional
+        stroke_dash_array : List[pint.Quantity], optional
             Array of line lengths and spacings to make a dashed stroke, [2]
             would give a dashed line "--  --  ", whereas [2, 1] would produce
             "-- -- ".
-        stroke_dash_offset : float, optional
+        stroke_dash_offset : pint.Quantity, optional
             Shift the start of the dash pattern of a stroke.
         stroke_linecap : LineCap, optional
             How the ends of the lines are rendered, butt, square or round.
@@ -174,9 +191,44 @@ class Stroke(AttributeBase):
             If the lines are mitered, how far does the miter extend.
         stroke_opacity : float, optional
             Opacity for the stroke: 0.0 is fully transparent, 1.0 is fully opaque.
-        stroke_width : float, optional
+        stroke_width : pint.Quantity, optional
             Width of the stroke.
         """
+        # Check types and units
+        if stroke is not None:
+            if not isinstance(stroke,str):
+                raise TypeError("Stroke colour must be a string")
+        if stroke_dash_array is not None:
+            if not isinstance(stroke_dash_array,list):
+                raise TypeError("Stroke dash array must be a list of pint.Quantities")
+            for x in stroke_dash_array:
+                if not isinstance(x,pint.Quantity):
+                    raise TypeError("Stroke dash array must be a list of pint.Quantities")
+        if stroke_dash_offset is not None:
+            if not isinstance(stroke_dash_offset,pint.Quantity):
+                raise TypeError("Stroke dash offset must be a pint.Quantity")
+        if stroke_linecap is not None:
+            if not isinstance(stroke_linecap,LineCap):
+                raise TypeError("Stroke line cap must be a LineCap object")
+        if stroke_linejoin is not None:
+            if not isinstance(stroke_linejoin,LineJoin):
+                raise TypeError("Stroke line join must be a LineJoin object")
+        if stroke_miterlimit is not None:
+            if not isinstance(stroke_miterlimit,float):
+                raise TypeError("Stroke miter limit must be a floating point number")
+        if stroke_opacity is not None:
+            if not isinstance(stroke_opacity,float):
+                raise TypeError("Stroke opacity must be a floating point number")
+            if stroke_opacity>1.0:
+                stroke_opacity = 1.0
+            if stroke_opacity<0.0:
+                stroke_opacity=0.0
+        if stroke_width is not None:
+            if not isinstance(stroke_width,pint.Quantity):
+                raise TypeError("Stroke width must be a pint.Quantity with [length] or [display_length units]")
+            if not (stroke_width.check("[length]") or stroke_width.check("[display_length]")):
+                raise ValueError("Stroke width must be a pint.Quantity with [length] or [display_length units]")
+
         self._stroke = stroke
         self._stroke_dash_array = stroke_dash_array
         self._stroke_dash_offset = stroke_dash_offset
@@ -187,7 +239,7 @@ class Stroke(AttributeBase):
         self._stroke_width = stroke_width
         super(Stroke, self).__init__(**kwargs)
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set the attributes in the XML tree element
 
         Sets the stroke attributes in the tag: "stroke", "stroke-dash-array",
@@ -198,14 +250,27 @@ class Stroke(AttributeBase):
         ----------
         element : Union[ET.Element,ET.SubElement]
             The XML tree element that this method adds the attributes to.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
         if self._stroke is not None:
             element.set('stroke', self._stroke)
         if self._stroke_dash_array is not None:
-            element.set('stroke-dash-array', ''.join(['{} '.format(x) for x in self._stroke_dash_array]))
+            element.set('stroke-dasharray', ''.join(['{} '.format(_tostr(x)) for x in self._stroke_dash_array]))
+        if self._stroke_dash_offset is not None:
+            element.set('stroke-dashoffset', _tostr(self._stroke_dash_offset))
+        if self._stroke_linecap is not None:
+            element.set('stroke-linecap', self._stroke_linecap.value)
+        if self._stroke_linejoin is not None:
+            element.set('stroke-linejoin', self._stroke_linejoin.value)
+        if self._stroke_miterlimit is not None:
+            element.set('stroke-miterlimit', str(self._stroke_miterlimit))
+        if self._stroke_opacity is not None:
+            element.set('stroke-opacity', str(self._stroke_opacity))
         if self._stroke_width is not None:
-            element.set('stroke-width', str(self._stroke_width))
-        super(Stroke, self).set_element_attributes(element)
+            element.set('stroke-width', _tostr(self._stroke_width))
+        super(Stroke, self).set_element_attributes(element, dpi=dpi)
 
 
 
@@ -213,22 +278,31 @@ class Fill(AttributeBase):
     """Mixing to store fill attributes
     """
 
-    def __init__(self, fill: str = None,
+    def __init__(self, fill: str = "none",
                         fill_opacity: float = None, **kwargs):
         """Initialise
 
         Parameters
         ----------
         fill : str, optional
-            Colour for this fill.  Colour name or hex string.
+            Colour for this fill.  Colour name or hex string.  Default is "none".
         fill_opacity : float, optional
             Opacity for the fill: 0.0 is fully transparent, 1.0 is fully opaque.
         """
+        if not isinstance(fill,str):
+            raise TypeError("Fill colour must be a string")
+        if fill_opacity is not None:
+            if not isinstance(fill_opacity,float):
+                raise TypeError("Fill opacity must be a floating point number")
+            if fill_opacity>1.0:
+                fill_opacity = 1.0
+            if fill_opacity<0.0:
+                fill_opacity=0.0
         self._fill = fill
         self._fill_opacity = fill_opacity
         super(Fill, self).__init__(**kwargs)
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set the attributes in the XML tree element
 
         Sets the fill attributes in the tag: "fill" and "fill-opacity".
@@ -237,12 +311,15 @@ class Fill(AttributeBase):
         ----------
         element : Union[ET.Element,ET.SubElement]
             The XML tree element that this method adds the attributes to.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
         if self._fill is not None:
             element.set('fill', self._fill)
         if self._fill_opacity is not None:
             element.set('fill-opacity', str(self._fill_opacity))
-        super(Fill, self).set_element_attributes(element)
+        super(Fill, self).set_element_attributes(element, dpi=dpi)
 
 
 
@@ -261,7 +338,7 @@ class Clip(AttributeBase):
         self._clip_path = clip_path
         super(Clip, self).__init__(**kwargs)
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set the attributes in the XML tree element
 
         Sets the "clip-path" attribute in the tag.
@@ -270,10 +347,13 @@ class Clip(AttributeBase):
         ----------
         element : Union[ET.Element,ET.SubElement]
             The XML tree element that this method adds the attributes to.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
         if self._clip_path is not None:
             element.set('clip-path', 'url(#'+self._clip_path+')')
-        super(Clip, self).set_element_attributes(element)
+        super(Clip, self).set_element_attributes(element, dpi=dpi)
 
 
 
@@ -409,25 +489,49 @@ class Font(AttributeBase):
     """Mixin to store font information
     """
 
-    def __init__(self, font_family: str=None, font_size: Union[FontSize,str]=None, font_stretch: Union[FontStretch,str]=None,
-                 font_style: FontStyle=None, font_variant: FontVariant=None, font_weight: Union[FontWeight,str]=None, **kwargs):
+    def __init__(self, font_family: str=None, font_size: Union[FontSize,pint.Quantity]=None, font_stretch: Union[FontStretch,pint.Quantity]=None,
+                 font_style: FontStyle=None, font_variant: FontVariant=None, font_weight: Union[FontWeight,int]=None, **kwargs):
         """Initialise
 
         Parameters
         ----------
         font_family : str, optional
             Font family string, can give a prioritised string, e.g., "Arial, Helvetica, sans-serif" by default None
-        font_size : Union[FontSize,str], optional
-            Size of the font, can be a FontSize, or a size string with units, e.g., "12pt", by default None
-        font_stretch : Union[FontStretch,str], optional
-            Stretching of the font, can be a FontStretch or a string with stretch %, by default None
+        font_size : Union[FontSize,pint.Quantity], optional
+            Size of the font, can be a FontSize, or a pint.Quantity giving the size with units, by default None
+        font_stretch : Union[FontStretch,pint.Quantity], optional
+            Stretching of the font, can be a FontStretch or pint.Quantity giving the percentage stretch, by default None
         font_style : FontStyle, optional
             Style for the string, e.g., italic, by default None
         font_variant : FontVariant, optional
             Variant, e.g., all caps, by default None
-        font_weight : Union[FontWeight,str], optional
-            Weight, can be a FontWeight, e.g., FontWeight.Bolder, or a size string, e.g., "900", by default None
+        font_weight : Union[FontWeight,int,float], optional
+            Weight, can be a FontWeight, e.g., FontWeight.Bolder, or a size value, e.g., 900, by default None
         """
+        if font_family is not None:
+            if not isinstance(font_family,str):
+                raise TypeError("Font family must be a string")
+        if font_size is not None:
+            if not isinstance(font_size,(FontSize,pint.Quantity)):
+                raise TypeError("Font size must be a FontSize object or a pint.Quantity")
+        if font_stretch is not None:
+            if not isinstance(font_stretch,(FontStretch,pint.Quantity)):
+                raise TypeError("Font stretch must be a FontStretch object or a pint.Quantity with percentage units")
+            if isinstance(font_stretch,pint.Quantity):
+                if not font_stretch.check("[percentage]"):
+                    raise ValueError("Font stretch must be a FontStretch object or a pint.Quantity with percentage units")
+        if font_style is not None:
+            if not isinstance(font_style,FontStyle):
+                raise TypeError("Font style must be a FontStyle object")
+        if font_variant is not None:
+            if not isinstance(font_variant,FontVariant):
+                raise TypeError("Font variant must be a FontVariant object")
+        if font_weight is not None:
+            if not isinstance(font_weight,(FontWeight,int)):
+                raise TypeError("Font weight must be a FontWeight object or a positive integer number")
+            if font_weight<0:
+                raise ValueError("Font weight must be a FontWeight object or a positive integer number")
+
         self._font_family = font_family
         self._font_size = font_size
         self._font_stretch = font_stretch
@@ -436,7 +540,7 @@ class Font(AttributeBase):
         self._font_weight = font_weight
         super(Font, self).__init__(**kwargs)
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set the attributes in the XML tree element
 
         Sets the font attributes in the tag.
@@ -445,6 +549,9 @@ class Font(AttributeBase):
         ----------
         element : Union[ET.Element,ET.SubElement]
             The XML tree element that this method adds the attributes to.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
         if self._font_family is not None:
             element.set('font-family', self._font_family)
@@ -452,7 +559,7 @@ class Font(AttributeBase):
             if isinstance(self._font_size, FontSize):
                 element.set('font-size', self._font_size.value)
             else:
-                element.set('font-size', self._font_size)
+                element.set('font-size', _tostr(self._font_size))
         if self._font_stretch is not None:
             if isinstance(self._font_stretch, FontStretch):
                 element.set('font-stretch', self._font_stretch.value)
@@ -467,7 +574,7 @@ class Font(AttributeBase):
                 element.set('font-weight', self._font_weight.value)
             else:
                 element.set('font-weight', self._font_weight)
-        super(Font, self).set_element_attributes(element)
+        super(Font, self).set_element_attributes(element, dpi=dpi)
 
 
 
@@ -497,10 +604,13 @@ class TextRendering(AttributeBase):
         text_anchor : TextAnchor, optional
             Anchor point for the for the string, e.g., middle, by default None (start).
         """
+        if text_anchor is not None:
+            if not isinstance(text_anchor,TextAnchor):
+                raise TypeError("Text anchor must be a TextAnchor object")
         self._text_anchor = text_anchor
         super(TextRendering, self).__init__(**kwargs)
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set the attributes in the XML tree element
 
         Sets the text rendering attributes in the tag.
@@ -509,10 +619,13 @@ class TextRendering(AttributeBase):
         ----------
         element : Union[ET.Element,ET.SubElement]
             The XML tree element that this method adds the attributes to.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
         if self._text_anchor is not None:
             if isinstance(self._text_anchor, TextAnchor):
                 element.set('text-anchor', self._text_anchor.value)
             else:
                 raise ValueError
-        super(TextRendering, self).set_element_attributes(element)
+        super(TextRendering, self).set_element_attributes(element, dpi=dpi)

@@ -29,6 +29,11 @@ ureg.define("foot = 12 * inch = ft")
 ureg.define("point = (1.0/72.0)*inch = pt")
 ureg.define("pica = (1.0/6.0)*inch = pc")
 
+# Angles.
+ureg.define("pi     = 3.1415926535897932384626433832795028841971693993751 = π  # pi")
+ureg.define("radian = [] = rad")
+ureg.define("degree = π / 180 * radian = deg = arcdeg = arcdegree = angular_degree")
+
 Q_ = ureg.Quantity
 
 cm = ureg.cm
@@ -36,6 +41,9 @@ mm = ureg.mm
 inch = ureg.inch
 pt = ureg.pt
 pc = ureg.pc
+rad = ureg.rad
+deg = ureg.deg
+px = ureg.px
 
 def _tostr(q: pint.Quantity) -> str:
     """Convert a length-type or % quantity to a string suitable for SVG.

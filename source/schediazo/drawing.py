@@ -9,11 +9,11 @@ import tinycss2.ast
 
 import pint
 
-from .units import _tostr
+from .units import _tostr, px, inch
 from .part import PartDict, PartBase
 from .containers import Definitions
 from .svg import Versions
-from ._paper import PaperSize
+from .paper import PaperSize
 
 
 
@@ -21,13 +21,36 @@ class Drawing(PartDict):
     """Drawing
     """
     def __init__(self, width: pint.Quantity=None, height: pint.Quantity=None, paper: PaperSize=None, orientation: str=None, **kwargs):
+        """Initialise a new drawing.
+
+        Parameters
+        ----------
+        width : pint.Quantity, optional
+            Width of the drawing, by default None
+        height : pint.Quantity, optional
+            Height of the drawing, by default None
+        paper : PaperSize, optional
+            Standard papersize definition to automatically set width and height, by default None.  Will
+            be overriden by manually specified widths and heights.
+        orientation : str, optional
+            "portrait" or "landscape", by default None which forces a paper specification to use the defined orientation.
+
+        Raises
+        ------
+        TypeError
+            If width, height, paper or orientation do not have the correct type.
+        """
         # Do basic type and value checking on inputs.
         if width is not None:
             if not isinstance(width,pint.Quantity):
                 raise TypeError("Width must be a number with units (pint.Unit) but received {}".format(type(width)))
+            if not (width.check('[length]') or width.check('[display_length]')):
+                raise ValueError("Width must be a length or number of pixels")
         if height is not None:
             if not isinstance(height,pint.Quantity):
                 raise TypeError("Height must be a number with units (pint.Unit) but received {}".format(type(height)))
+            if not (height.check('[length]') or height.check('[display_length]')):
+                raise ValueError("Height must be a length or number of pixels")
         if width is None and height is not None:
             print("Provided with height but no width - ignoring size specification")
         if width is not None and height is None:
@@ -64,19 +87,13 @@ class Drawing(PartDict):
             if paper is not None:
                 print("Provided both width/height and a PaperSize, ignoring the PaperSize")
 
-            if isinstance(width,(int,float)):
-                self._width = float(width)*usr
-            else:
-                self._width = width
-            if isinstance(height,(int,float)):
-                self._height = float(height)*usr
-            else:
-                self._height = height
+            self._width = width
+            self._height = height
 
         super(Drawing, self).__init__(**kwargs)
 
 
-    def save(self, _filename: str, compressed: bool=False, version: Versions = Versions.SVG11, pretty=False):
+    def save(self, _filename: str, compressed: bool=False, version: Versions = Versions.SVG11, pretty=False, dpi=72*px/inch):
         self._root = ET.Element('svg')
         self._root.set('xmlns', 'http://www.w3.org/2000/svg')
         self._root.set('xmlns:xlink', 'http://www.w3.org/1999/xlink')
@@ -84,13 +101,19 @@ class Drawing(PartDict):
 
         # Set the dimensions.
         if self._width is not None:
-            self._root.set("width", _tostr(self._width))
+            if self._width.check("[length]"):
+                self._root.set("width", _tostr(self._width))
+            else:
+                self._root.set("width", _tostr(self._width/dpi))
         if self._height is not None:
-            self._root.set("height", _tostr(self._height))
+            if self._height.check("[length]"):
+                self._root.set("height", _tostr(self._height))
+            else:
+                self._root.set("height", _tostr(self._height/dpi))
 
         # Add all the definition objects.
         if len(self._definitions)>0:
-            self._definitions.create_element(self._root)
+            self._definitions.create_element(self._root, dpi=dpi)
 
         # Add the styles.
         if len(self._styles)>0:
@@ -108,7 +131,7 @@ class Drawing(PartDict):
 
         # Add the other objects.
         for child in self:
-            self[child].create_element(self._root)
+            self[child].create_element(self._root, dpi=dpi)
 
         # Write the file.
         if compressed:

@@ -3,33 +3,61 @@ from typing import List, Union
 
 import numpy as np
 
+import pint
+
 from .attributes import Styling, Stroke, Fill, Transform, Clip, Font, TextRendering
 from .part import PartBase
 from .paths import RawPath
-
+from .units import ureg, _tostr
 
 class Text(TextRendering,Stroke,Fill,Transform,Clip,Styling,Font,PartBase):
     """Text
     """
-    def __init__(self, text: str, x: float=None, y: float=None, dx: float=None, dy: float=None,
-                        rotate: List[float]=None, **kwargs):
+    def __init__(self, text: str, x: pint.Quantity=None, y: pint.Quantity=None, dx: pint.Quantity=None, dy: pint.Quantity=None,
+                        rotate: List[Union[pint.Quantity,str]]=None, **kwargs):
         """Initialise
 
         Parameters
         ----------
         text : str
             String to render.
-        x : float, optional
+        x : pint.Quantity, optional
             X coordinate of the starting point of the text baseline, by default None
-        y : float, optional
+        y : pint.Quantity, optional
             X coordinate of the starting point of the text baseline, by default None
-        dx : float, optional
+        dx : pint.Quantity, optional
             Horizontal shift in starting point of the text baseline from previous text element, by default None
-        dy : float, optional
+        dy : pint.Quantity, optional
             Vertical shift in starting point of the text baseline from previous text element, by default None
-        rotate : List[float], optional
+        rotate : List[Union[pint.Quantity,str]], optional
             Rotation angle for each glyph, by default None.
         """
+        # Check units and types.
+        if x is not None:
+            if not isinstance(x,(pint.Quantity)):
+                raise TypeError
+            if not (x.check('[length]') or x.check('[display_length]') or x.check('[percentage]')):
+                raise ValueError
+        if y is not None:
+            if not isinstance(y,(pint.Quantity)):
+                raise TypeError
+            if not (y.check('[length]') or y.check('[display_length]') or y.check('[percentage]')):
+                raise ValueError
+        if dy is not None:
+            if not isinstance(dy,(pint.Quantity)):
+                raise TypeError
+            if not (dy.check('[length]') or dy.check('[display_length]') or dy.check('[percentage]')):
+                raise ValueError
+        if dx is not None:
+            if not isinstance(dx,(pint.Quantity)):
+                raise TypeError
+            if not (dx.check('[length]') or dx.check('[display_length]') or dx.check('[percentage]')):
+                raise ValueError
+        if rotate is not None:
+            for angle in rotate:
+                if isinstance(rotate,pint.Quantity):
+                    if not rotate.check('[angle]'):
+                        raise ValueError
         self._text = text
         self._x = x
         self._y = y
@@ -39,13 +67,16 @@ class Text(TextRendering,Stroke,Fill,Transform,Clip,Styling,Font,PartBase):
         super(Text,self).__init__(**kwargs)
         self._tag = 'text'
 
-    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement]):
+    def set_element_attributes(self, element: Union[ET.Element,ET.SubElement], dpi: pint.Quantity=None):
         """Set SVG attributes for the text element.
 
         Parameters
         ----------
         element : Union[ET.Element,ET.SubElement]
             Element in which to set the attributes.
+        dpi : pint.Quantity, default None
+            A value to scale any coordinates in metres into pixels (only used for some shapes, e.g., paths, PolyLines,
+            where there the units are in pixels. (user coordinates).  The default is 1:1.
         """
         element.text = self._text
         if self._x is not None:
@@ -57,8 +88,15 @@ class Text(TextRendering,Stroke,Fill,Transform,Clip,Styling,Font,PartBase):
         if self._dy is not None:
             element.set('dy', str(self._dy))
         if self._rotate is not None:
-            element.set('rotate', ''.join(['{} '.format(r) for r in self._rotate]))
-        super(Text, self).set_element_attributes(element)
+            s = ''
+            for r in self._rotate:
+                if type(r,str):
+                    s.join(r)
+                else:
+                    s.join('{} '.format(_tostr(r.to(ureg.deg))))
+            element.set('rotate', s)
+
+        super(Text, self).set_element_attributes(element, dpi=dpi)
 
 
 
