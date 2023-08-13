@@ -7,7 +7,7 @@ import pint
 from .attributes import Styling, Stroke, Fill, Transform, Clip
 from .part import PartBase
 from .paths import *
-from .units import _tostr, ureg, Q_
+from .units import _tostr, ureg, Q_, _scale
 
 class Line(Stroke,Transform,Clip,Styling,PartBase):
     """Line
@@ -401,7 +401,7 @@ class Polyline(Stroke,Fill,Transform,Clip,Styling,PartBase):
         device_per_pixel : pint.Quantity, default 1 device units per pixel
             A value to scale any coordinates in pixels into device units.
         """
-        element.set('points', ''.join(['{},{} '.format((xi*device_per_length).magnitude,(yi*device_per_length).magnitude) for xi,yi in zip(self._x,self._y)]))
+        element.set('points', ''.join(['{},{} '.format(_scale(xi, device_per_length, device_per_pixel).magnitude,_scale(yi, device_per_length, device_per_pixel).magnitude) for xi,yi in zip(self._x,self._y)]))
         super(Polyline, self).set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
 
     def __repr__(self) -> str:
@@ -470,7 +470,7 @@ class Polygon(Stroke,Fill,Transform,Clip,Styling,PartBase):
         device_per_pixel : pint.Quantity, default 1 device units per pixel
             A value to scale any coordinates in pixels into device units.
         """
-        element.set('points', ''.join(['{},{} '.format((xi*device_per_length).magnitude,(yi*device_per_length).magnitude) for xi,yi in zip(self._x,self._y)]))
+        element.set('points', ''.join(['{},{} '.format(_scale(xi, device_per_length, device_per_pixel).magnitude,_scale(yi, device_per_length, device_per_pixel).magnitude) for xi,yi in zip(self._x,self._y)]))
         super(Polygon, self).set_element_attributes(element, device_per_length=device_per_length, device_per_pixel=device_per_pixel)
 
     def __repr__(self) -> str:

@@ -75,3 +75,34 @@ def _tostr(q: pint.Quantity) -> str:
     else:
         raise ValueError("Cannot convert these units <{}> to a string for SVG".format(q.units))
 
+
+def _scale(v: pint.Quantity, device_per_length: pint.Quantity, device_per_pixel: pint.Quantity) -> pint.Quantity:
+    """Scale a quantity into device coordinates.
+
+    Parameters
+    ----------
+    v : pint.Quantity
+        Quantity to scale.
+    device_per_length : pint.Quantity
+        Scaling for physical lengths into device coordinates.
+    device_per_pixel : pint.Quantity
+        Scaling for pixels into device coordinates.
+
+    Returns
+    -------
+    pint.Quantity
+        Value in device coordinates.
+
+    Raises
+    ------
+    ValueError
+        If the units cannot be scaled.
+    """
+    
+    if v.check("[length]"):
+        return (v*device_per_length).to(ureg.device)
+    elif v.check("[pixel]"):
+        return (v*device_per_pixel).to(ureg.device)
+    else:
+        raise ValueError
+
