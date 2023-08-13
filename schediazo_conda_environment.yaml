@@ -1,4 +1,4 @@
-name: schediazo_dev
+name: schediazodev
 
 dependencies:
   - python=3.8
