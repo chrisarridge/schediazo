@@ -32,7 +32,7 @@ ureg.define("pica = (1.0/6.0)*inch = pc")
 
 # Angles.
 ureg.define("pi     = 3.1415926535897932384626433832795028841971693993751 = π  # pi")
-ureg.define("radian = [] = rad")
+ureg.define("radian = [angle] = rad")
 ureg.define("degree = π / 180 * radian = deg = arcdeg = arcdegree = angular_degree")
 
 Q_ = ureg.Quantity

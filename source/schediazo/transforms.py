@@ -4,6 +4,9 @@ from typing import List, Tuple, Union
 import math
 import numpy as np
 
+import pint
+
+from .units import ureg, _tostr, Q_
 
 
 class Affine:
@@ -11,6 +14,7 @@ class Affine:
     def __init__(self):
         self._matrix = None
         self._operations = []
+        self._units = None
 
     def __getitem__(self, index: int):
         """Directly get elements of the transformation matrix"""
@@ -28,27 +32,67 @@ class Affine:
         """Return an SVG-formatted string of transforms"""
         return ''.join([str(op)+' ' for op in self._operations])
 
-    def __call__(self, u: Union[float,List,np.ndarray,Tuple], v: Union[float,List,np.ndarray,Tuple]):
+    def __call__(self, u: Union[pint.Quantity,List[pint.Quantity],Tuple[pint.Quantity]],
+                        v: Union[pint.Quantity,List[pint.Quantity],Tuple[pint.Quantity]]):
         return self.transform(u, v)
 
-    def transform(self, u: Union[float,List,np.ndarray,Tuple], v: Union[float,List,np.ndarray,Tuple]):
+    def transform(self, u: Union[pint.Quantity,List[pint.Quantity],Tuple[pint.Quantity]],
+                        v: Union[pint.Quantity,List[pint.Quantity],Tuple[pint.Quantity]]):
         """Transform some points given by u and v coordinates"""
+
         if self._matrix is None:
             self.build_matrix()
 
-        if isinstance(u,(list,np.ndarray,tuple)) and isinstance(v,(list,np.ndarray,tuple)):
-            if len(u)==len(v):
-                uv = np.ones((3,len(v)))
-                uv[0,:] = u
-                uv[1,:] = v
-            else:
-                raise ValueError('u and v must be the same length')
-            pq = np.einsum('ij, jk -> ik', self._matrix, uv)
+        if isinstance(u,pint.Quantity) and isinstance(v,pint.Quantity):
 
+            # Check the units match those in the transform.
+            if self._units is not None:
+                if not (u.check(self._units) and v.check(self._units)):
+                    raise ValueError("position units do not have the same units as those in the transform")
+
+            if u.ndim==0 and v.ndim==0:
+                if self._units is not None:
+                    if not (u.check(self._units) and v.check(self._units)):
+                        raise ValueError("position units do not have the same units as those in the transform")
+                    p, q, _ = np.matmul(self._matrix, [u.to(self._units).magnitude, v.to(self._units).magnitude, 1.0])
+                    return p*self._units, q*self._units
+                else:
+                    p, q, _ = np.matmul(self._matrix, [u.magnitude, v.magnitude, 1.0])
+                    return p*u.units, q*v.units
+
+            else:
+                if len(u)!=len(v):
+                    raise ValueError('u and v must be the same length')
+                uv = np.ones((3,len(v)))
+                if self._units is not None:
+                    uv[0,:] = u.to(self._units).magnitude
+                    uv[1,:] = v.to(self._units).magnitude
+                    pq = np.einsum('ij, jk -> ik', self._matrix, uv)*self._units
+                else:
+                    uv[0,:] = u.magnitude
+                    uv[1,:] = v.magnitude
+                    pq = np.einsum('ij, jk -> ik', self._matrix, uv)*u.units
+                return pq[0,:], pq[1,:]
+
+        elif isinstance(u,(list,tuple)) and isinstance(v,(list,tuple)):
+
+            if len(u)!=len(v):
+                raise ValueError('u and v must be the same length')
+            for _u,_v in zip(u,v):
+                if not isinstance(_u,pint.Quantity):
+                    raise TypeError("u and v must be a sequence container of pint.Quantity objects")
+                if not isinstance(_v,pint.Quantity):
+                    raise TypeError("u and v must be a sequence container of pint.Quantity objects")
+
+            uv = np.ones((3,len(v)))*u[0].units
+            uv[0,:] = Q_.from_list(u)
+            uv[1,:] = Q_.from_list(v)
+            pq = np.einsum('ij, jk -> ik', self._matrix, uv)
             return pq[0,:], pq[1,:]
+
         else:
-            p, q, _ = np.matmul(self._matrix, [u, v, 1.0])
-        return p, q
+            raise TypeError("u and v must be a pint.Quantity object or a sequence container of pint.Quantity objects")
+
 
     @property
     def matrix(self):
@@ -63,24 +107,36 @@ class Affine:
         for op in self._operations:
             self._matrix = np.matmul(self._matrix, op.matrix)
 
-    def skewX(self, angle: float):
+    def skewX(self, angle: pint.Quantity):
         """Add a X-axis skew transformation"""
         self._operations.insert(0,SkewX(angle))
         return self
 
-    def skewY(self, angle: float):
+    def skewY(self, angle: pint.Quantity):
         """Add a Y-axis skew transformation"""
         self._operations.insert(0,SkewY(angle))
         return self
 
-    def rotate(self, angle: float, x: float=None, y: float=None):
+    def rotate(self, angle: pint.Quantity, x: pint.Quantity=None, y: pint.Quantity=None):
         """Add a rotation transformation"""
         self._operations.insert(0,Rotate(angle, x=x, y=y))
+        if x is not None and y is not None:
+            if self._units is not None:
+                if not x.check(self._units) or not y.check(self._units):
+                    raise ValueError("x and y must have the same units as those already in the transform object")
+            else:
+                self._units = x.units
         return self
 
-    def translate(self, tx: float, ty: float):
+    def translate(self, tx: pint.Quantity, ty: pint.Quantity):
         """Add a translation transformation"""
         self._operations.insert(0,Translate(tx, ty))
+        if tx is not None and ty is not None:
+            if self._units is not None:
+                if not tx.check(self._units) or not ty.check(self._units):
+                    raise ValueError("x and y must have the same units as those already in the transform object")
+            else:
+                self._units = tx.units
         return self
 
     def scale(self, sx: float, sy: float):
@@ -116,7 +172,11 @@ class Affine:
 
 class SkewX:
     """X-axis skew transformation"""
-    def __init__(self, angle: float):
+    def __init__(self, angle: pint.Quantity):
+        if not isinstance(angle,pint.Quantity):
+            raise TypeError("skew angles must be pint.Quantities")
+        if not angle.check("[angle]"):
+            raise TypeError("skew angles must be pint.Quantities that are angular units")
         self._angle = angle
 
     def __str__(self):
@@ -124,34 +184,44 @@ class SkewX:
 
     @property
     def matrix(self):
-        return np.array([[1.0, math.tan(math.radians(self._angle)), 0.0], [0, 1.0, 0.0], [0, 0, 1]])
+        return np.array([[1.0, math.tan(self._angle.to(ureg.radians)), 0.0], [0, 1.0, 0.0], [0, 0, 1]])
 
 
 class SkewY:
     """Y-axis skew transformation"""
-    def __init__(self, angle: float):
+    def __init__(self, angle: pint.Quantity):
+        if not isinstance(angle,pint.Quantity):
+            raise TypeError("skew angles must be pint.Quantities")
+        if not angle.check("[angle]"):
+            raise TypeError("skew angles must be pint.Quantities that are angular units")
         self._angle = angle
 
     def __str__(self):
-        return 'skewY({})'.format(self._angle)
+        return 'skewY({})'.format(self._angle.to(ureg.degree))
 
     @property
     def matrix(self):
-        return np.array([[1.0, 0.0, 0.0], [math.tan(math.radians(self._angle)), 1.0, 0.0], [0, 0, 1]])
+        return np.array([[1.0, 0.0, 0.0], [math.tan(self._angle.to(ureg.radians)), 1.0, 0.0], [0, 0, 1]])
 
 
 class Translate:
     """Translation transformation"""
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: pint.Quantity, y: pint.Quantity):
+        if not isinstance(x,pint.Quantity) or not isinstance(y,pint.Quantity):
+            raise TypeError("translation must be pint.Quantities")
+        if not (x.check("[length]") or x.check("[pixel]") or x.check("[device]")):
+            raise TypeError("translation must be pint.Quantities that are length, pixel or device units")
+        if not (x.units==y.units):
+            raise ValueError("x and y must have the same units")
         self._x = x
         self._y = y
 
     def __str__(self):
-        return 'translate({} {})'.format(self._x, self._y)
+        return 'translate({} {})'.format(_tostr(self._x), _tostr(self._y))
 
     @property
     def matrix(self):
-        return np.array([[1.0, 0, self._x], [0, 1.0, self._y], [0, 0, 1]])
+        return np.array([[1.0, 0, self._x.magnitude], [0, 1.0, self._y.magnitude], [0, 0, 1]])
 
 
 class Scale:
@@ -170,9 +240,22 @@ class Scale:
 
 class Rotate:
     """Rotation transformation"""
-    def __init__(self, angle: float, x: float=None, y: float=None):
+    def __init__(self, angle: pint.Quantity, x: pint.Quantity=None, y: pint.Quantity=None):
         if (x is not None) != (y is not None):
-             raise ValueError
+             raise ValueError("Must specify both x and y")
+        if x is not None and y is not None:
+            if not x.check("[length]") or not x.check("[pixel]") or not x.check("[device]"):
+                raise TypeError("origin must be pint.Quantities that are length, pixel or device units")
+            if not isinstance(x,pint.Quantity) or not isinstance(y,pint.Quantity):
+                raise TypeError("origin must be pint.Quantities")
+            if not isinstance(x,pint.Quantity) or not isinstance(y,pint.Quantity):
+                raise TypeError("origin must be pint.Quantities")
+            if not (x.units==y.units):
+                raise ValueError("x and y must have the same units")
+        if not isinstance(angle,pint.Quantity):
+            raise TypeError("angle must be pint.Quantity")
+        if not angle.check("[angle]"):
+            raise ValueError("angle must be a pint.Quantity with an angular unit")
 
         self._x = x
         self._y = y
@@ -180,16 +263,20 @@ class Rotate:
 
     def __str__(self):
         if self._x is None or self._y is None:
-            return 'rotate({})'.format(self._angle)
+            return 'rotate({})'.format(self._angle.to(ureg.degree))
         else:
-            return 'rotate({} {} {})'.format(self._angle, self._x, self._y)
+            return 'rotate({} {} {})'.format(self._angle.to(ureg.degree), _tostr(self._x), _tostr(self._y))
 
     @property
     def matrix(self):
-        return np.array([[math.cos(math.radians(self._angle)), -math.sin(math.radians(self._angle)), 0],
-                        [math.sin(math.radians(self._angle)), math.cos(math.radians(self._angle)), 0],
-                        [0, 0, 1]])
-
+        if self._x is not None:
+            return np.array([[math.cos(self._angle.to(ureg.rad).magnitude), -math.sin(self._angle.to(ureg.rad).magnitude), 0],
+                            [math.sin(self._angle.to(ureg.rad).magnitude), math.cos(self._angle.to(ureg.rad).magnitude), 0],
+                            [self._x.magnitude, self._y.magnitude, 1]])
+        else:
+            return np.array([[math.cos(self._angle.to(ureg.rad).magnitude), -math.sin(self._angle.to(ureg.rad).magnitude), 0],
+                            [math.sin(self._angle.to(ureg.rad).magnitude), math.cos(self._angle.to(ureg.rad).magnitude), 0],
+                            [0.0, 0.0, 1.0]])
 
 class Shear:
     """Shear transformation"""
